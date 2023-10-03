@@ -1,18 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public enum TileType
 {
     None,
-    Grass
+    Grass,
+    Road,
+    Mudd,
+    Dust,
+    Water
 }
 
 [CreateAssetMenu(fileName = "Persona", menuName = "ScriptableObjects/LevelPiece", order = 2)]
 public class Piece : ScriptableObject
 {
-    [SerializeField] GameObject prefab;
-    [SerializeField] TileType[] types;
+    [SerializeField] (Material, TileType) materials;
+    [SerializeField] PieceData[] pieces;
+    
 
     // Start is called before the first frame update
     void Start()
@@ -25,4 +31,35 @@ public class Piece : ScriptableObject
     {
         
     }
+}
+
+[Serializable]
+public struct PieceData
+{
+    [SerializeField] GameObject piece;
+    [SerializeField] TileType[] types;
+    [SerializeField] bool completePiece;
+    [SerializeField] int rotation;
+
+    public int Rotation
+    {
+        get => rotation;
+        set
+        {
+            rotation = value;
+        }
+    }
+
+    public PieceData(int rotation, bool completePiece = true)
+    {
+        piece = null;
+        types = new TileType[6];
+        this.completePiece = completePiece;
+        this.rotation = rotation;
+    }
+}
+
+public struct MaterialData
+{
+    [SerializeField] 
 }

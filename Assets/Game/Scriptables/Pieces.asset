@@ -12,6 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66cd2d9b634871643a7056fb80190d49, type: 3}
   m_Name: Pieces
   m_EditorClassIdentifier: 
+  materials:
+  - material: {fileID: 2237609596182688317, guid: d162b28177df4eb4cad8e5c9a77bb05e, type: 3}
+    type: 1
+  - material: {fileID: -2867747967464863736, guid: fec111a984410614584b1a9553d74584, type: 3}
+    type: 2
+  - material: {fileID: -4770390735465466038, guid: d16f867c5f976ac4baa0f06e65a1a12b, type: 3}
+    type: 3
+  - material: {fileID: -8559731736929697333, guid: c2fb9fcb9a9d6e3458197dc291a57ddf, type: 3}
+    type: 5
   pieces:
   - piece: {fileID: 439441880705897246, guid: 9c252e06b471e7549a1c50bc11f4832a, type: 3}
     types: 010000000100000001000000010000000100000001000000

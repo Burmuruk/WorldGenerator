@@ -14,7 +14,7 @@ public class LevelGenerator : MonoBehaviour
         (new Vector2Int(1, 0), new Vector2(2, 0)),
         (new Vector2Int(1, 1), new Vector2(1, -1.75f)),
         (new Vector2Int(-1, 1), new Vector2(-1, -1.75f)),
-        (new Vector2Int(-1, 0), new Vector2(-1, 0)),
+        (new Vector2Int(-1, 0), new Vector2(-2, 0)),
         (new Vector2Int(-1, -1), new Vector2(-1, 1.75f)),
     };
 
@@ -27,30 +27,39 @@ public class LevelGenerator : MonoBehaviour
         CreatePiece(piece , (0, 0));
     }
 
-    private void CreatePiece(Piece piece, in (float x, float y) position)
+    private void CreatePiece(Piece piece, in (float x, float y) cord, int dirIdx = 0)
     {
         
-        if (position.x < 0 || position.x >= size.x ||
-            position.y < 0 || position.y >= size.y) 
+        if (cord.x < 0 || cord.x >= size.x ||
+            cord.y < 0 || cord.y >= size.y) 
             return;
         
-        ref var cur = ref pieces[(int)position.x, (int)position.y];
-        //print(cur.piece);
+        ref var cur = ref pieces[(int)cord.x, (int)cord.y];
 
-
-
-        for (int i = 0; i < 6; i++)
+        if (!cur)
         {
-            print(position);
+            Vector3 curPos = new Vector3(cord.x * 2, 0, cord.y * -1.75f);
+
+            if ((cord.y % 2 != 0))
+                curPos += Vector3.right;
+
+            cur.piece = Instantiate(piece.piece, position: curPos, rotation: Quaternion.identity, parent: transform);
+        }
+        else
+            return;
+
+        for (int i = 0; i < directions.Length; i++)
+        {
+            print(cord);
+            var newCords = directions[i].cord;
+
             Vector2 newPos = new Vector2
             {
-                x = position.x + (position.x % 2 != 0 ? directions[i].cord.x : 0),
-                y = position.y + directions[i].cord.y
+                x = cord.x + ((cord.y % 2 == 0 && newCords.y != 0) ? 0 : newCords.x),
+                y = cord.y + newCords.y
             };
 
-            cur.piece = Instantiate(piece.piece, position: newPos, rotation: Quaternion.identity, parent: transform);
-
-            CreatePiece(piece, (newPos.x, newPos.y));
+            CreatePiece(piece, (newPos.x, newPos.y), i);
         }
     }
 }

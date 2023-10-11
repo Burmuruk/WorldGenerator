@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public enum TileType
+public enum SideType
 {
     None,
     Grass,
@@ -13,90 +13,106 @@ public enum TileType
     Water
 }
 
+public enum TileType
+{
+    None,
+    Solid,
+    Transition,
+    Road,
+}
+
 [CreateAssetMenu(fileName = "Persona", menuName = "ScriptableObjects/LevelPiece", order = 2)]
 public class PieceCollection : ScriptableObject
 {
     [SerializeField] MaterialData[] materials;
     [SerializeField] Piece[] pieces;
+    [SerializeField] bool initialized = false;
 
-    Dictionary<TileType, Piece> _pieces;
+    Dictionary<TileType, List<Piece>> _pieces;
+    Dictionary<SideType, Material> _materials;
 
-    public Piece GetPiece(TileType tileType)
+    public void Initialize()
     {
-        var piece = pieces[0];
+        if (initialized) return;
 
-        return piece;
+        _pieces = new ();
+
+        var chunck = new List<List<Piece>>()
+        {
+            new (),
+            new (),
+            new (),
+        };
+
+        for (int i = 0; i < pieces.Length; ++i)
+        {
+            SideType lastType = pieces[i][0];
+            bool isSolid = true;
+
+            foreach (var tileType in pieces[i].types)
+            {
+                if (tileType == SideType.Road)
+                {
+                    chunck[0].Add(pieces[i]);
+                    isSolid = false;
+                    break;
+                }
+                else if (lastType != tileType)
+                {
+                    chunck[1].Add(pieces[i]);
+                    isSolid = false;
+                    break;
+                }
+                else
+                    isSolid = true;
+            }
+
+            if (isSolid)
+                chunck[2].Add(pieces[i]);
+        }
+
+        _pieces.Add(TileType.Road, chunck[0]);
+        _pieces.Add(TileType.Transition, chunck[1]);
+        _pieces.Add(TileType.Solid, chunck[2]);
+
+        _materials = new();
+        foreach (var mat in materials)
+        {
+            _materials.Add(mat.type, mat.material); 
+        }
+
+        initialized = true;
     }
 
-    public void GetPiece(TileType tileType, params (int idx, TileType sideType)[] sides)
+    public Piece GetPiece(TileType tileType, SideType type)
+    {
+        Initialize();
+
+        var rand = UnityEngine.Random.Range(0, _pieces[tileType].Count);
+
+        return _pieces[tileType][rand];
+    }
+
+    public void GetPiece(TileType tileType, params (int idx, SideType sideType)[] sides)
     {
 
 
         //return _pieces[tileType][]
 
     }
-}
 
-[Serializable]
-public struct Piece
-{
-    [SerializeField] public GameObject piece;
-    [SerializeField] public TileType[] types;
-    [SerializeField] public bool completePiece;
-    [SerializeField] public int rotation;
-    public List<TileType> materials;
-
-    public TileType this[int i] { get => types[i]; }
-
-    public int Rotation
+    public void ChangeColor(Piece piece, SideType target, int idx = 0)
     {
-        get => rotation;
-        set
-        {
-            rotation = value;
-        }
+        var renderer = piece.piece.GetComponentInChildren<MeshRenderer>(false);
+
+        //renderer.materials[piece.GetMaterial()[idx]] = _materials[target];
+        renderer.materials[piece.GetMaterial()[idx]].CopyPropertiesFromMaterial(_materials[target]);
     }
-
-    public Piece(int rotation, bool completePiece = true)
-    {
-        materials = new();
-        piece = null;
-        types = new TileType[6];
-        this.completePiece = completePiece;
-        this.rotation = rotation;
-    }
-
-    public void SetMaterial(TileType material)
-    {
-        materials.Add(material);
-    }
-    
-    public static bool operator == (Piece piece1, Piece piece2)
-    {
-        if (piece1.piece == piece2.piece)
-            return true;
-        else
-            return false;
-    }
-
-    public static bool operator != (Piece piece1, Piece piece2)
-    {
-        if (piece1.piece != piece2.piece)
-            return true;
-        else
-            return false;
-    }
-
-    public static bool operator !(Piece piece) => !piece.piece;
-
-    public static bool operator true(Piece piece1) => piece1.piece == true;
-
-    public static bool operator false(Piece piece1) => piece1.piece == false;
 }
 
 [Serializable]
 public struct MaterialData
 {
-    [SerializeField] Material material;
-    [SerializeField] TileType type;
+    [SerializeField] public Material material;
+    [SerializeField] public SideType type;
 }

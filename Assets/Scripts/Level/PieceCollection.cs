@@ -84,7 +84,7 @@ public class PieceCollection : ScriptableObject
         initialized = true;
     }
 
-    public Piece GetPiece(TileType tileType, SideType type)
+    public Piece GetPiece(TileType tileType)
     {
         //Initialize();
 
@@ -103,10 +103,11 @@ public class PieceCollection : ScriptableObject
 
     public void ChangeColor(Piece piece, SideType target, int idx = 0)
     {
+        if (target == SideType.None) return;
         var renderer = piece.piece.GetComponentInChildren<MeshRenderer>(false);
 
         //renderer.materials[piece.GetMaterial()[idx]] = _materials[target];
-        renderer.materials[piece.GetMaterial()[idx]].CopyPropertiesFromMaterial(_materials[target]);
+        renderer.materials[piece.GetIdxMaterial(idx)].CopyPropertiesFromMaterial(_materials[target]);
     }
 }
 

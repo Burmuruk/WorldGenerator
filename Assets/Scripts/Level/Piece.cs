@@ -9,6 +9,7 @@ using UnityEngine;
 public struct Piece
 {
     [SerializeField] public GameObject piece;
+    [SerializeField] public SideType type;
     [SerializeField] public SideType[] types;
     [SerializeField] public int[] materialIdx;
     [SerializeField] public bool completePiece;
@@ -25,18 +26,19 @@ public struct Piece
         }
     }
 
-    public Piece(int rotation, bool completePiece = true)
+    public Piece(SideType type, int rotation, bool completePiece = true)
     {
         piece = null;
         types = new SideType[6];
         this.completePiece = completePiece;
         this.rotation = rotation;
         materialIdx = null;
+        this.type = type;
     }
 
-    public int[] GetMaterial()
+    public int GetIdxMaterial(int idx)
     {
-        return materialIdx;
+        return materialIdx[idx];
     }
 
     public override bool Equals(object obj)

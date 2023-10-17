@@ -33,7 +33,7 @@ public class PieceCollection : ScriptableObject
 
     public void Initialize()
     {
-        if (initialized) return;
+        //if (initialized) return;
 
         _pieces = new ();
 
@@ -86,7 +86,7 @@ public class PieceCollection : ScriptableObject
 
     public Piece GetPiece(TileType tileType, SideType type)
     {
-        Initialize();
+        //Initialize();
 
         var rand = UnityEngine.Random.Range(0, _pieces[tileType].Count);
 

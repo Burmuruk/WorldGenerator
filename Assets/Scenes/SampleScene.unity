@@ -3895,7 +3895,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PieceData: {fileID: 11400000, guid: c8e3b05649e97614d85a649f310f00e1, type: 2}
-  size: {x: 30, y: 30}
+  size: {x: 37, y: 37}
 --- !u!4 &1127415944
 Transform:
   m_ObjectHideFlags: 0

@@ -24,17 +24,17 @@ public class LevelGenerator : MonoBehaviour
 
     readonly Dictionary<SideType, Probs<SideType>> probs = new()
     {
-        { SideType.Grass, new (SideType.Grass, (SideType.Water, .001f), (SideType.Dust, .25f)) } ,
-        { SideType.Water, new (SideType.Water, (SideType.Grass, .15f)) },
-        { SideType.Dust, new (SideType.Dust, (SideType.Grass, .15f)) },
+        { SideType.Grass, new(SideType.Grass, (SideType.Water, .001f), (SideType.Dust, .25f)) },
+        { SideType.Water, new(SideType.Water, (SideType.Grass, .15f)) },
+        { SideType.Dust, new(SideType.Dust, (SideType.Grass, .15f)) },
     };
 
     readonly Dictionary<ToppingType, Probs<ToppingType>> toppingProbs = new()
     {
-        { ToppingType.Wood, new (ToppingType.Wood, (ToppingType.Rock, .001f)) }
+        { ToppingType.Wood, new(ToppingType.Wood, (ToppingType.Rock, .001f)) }
     };
 
-    struct Probs <T> where T : Enum
+    struct Probs<T> where T : Enum
     {
         (T type, float prob)[] probs;
 
@@ -92,24 +92,98 @@ public class LevelGenerator : MonoBehaviour
 
             return type;
         }
+
+        public void ResetProbs(T type)
+        {
+            var ranges = GetRanges();
+            int firstIdx = 0;
+
+            for (int i = 0; i < ranges.Length; i++)
+            {
+                if (probs[i].type.CompareTo(ranges[i].type) == 0)
+                    firstIdx = i;
+            }
+
+            for (int i = 0, j = 1; i < ranges.Length; i++)
+            {
+                if (i == firstIdx)
+                {
+                    probs[0] = (ranges[i].type, ranges[i].prob);
+                    continue;
+                }
+
+                probs[j] = (ranges[i].type, ranges[i].prob);
+                j++;
+            }
+        }
+
+        public void IncreaseProb(T type, float increasement)
+        {
+            var ranges = GetRanges();
+            int firstIdx = 0;
+            float valueToRest = ranges.Length > 1 ? increasement / ranges.Length - 1 : 0;
+
+            for (int i = 0; i < ranges.Length; i++)
+            {
+                if (probs[i].type.CompareTo(ranges[i].type) == 0)
+                    firstIdx = i;
+            }
+
+            for (int i = 0, j = 1; i < ranges.Length; i++)
+            {
+                if (i == firstIdx)
+                {
+                    probs[0] = (ranges[i].type, ranges[i].prob + increasement);
+                    continue;
+                }
+
+                probs[j] = (ranges[i].type, ranges[i].prob - valueToRest is var r && r < 0 ? 0 : r);
+                j++;
+            }
+        }
+
+        private (T type, Range range, float prob)[] GetRanges()
+        {
+            (T type, Range range, float prob)[] probsRange = new (T type, Range range, float prob)[probs.Length];
+            float value = 0;
+
+            for (int i = 0; i < probs.Length; i++)
+            {
+                probsRange[i] = (probs[i].type, new Range((Index)value, (Index)probs[i].prob), probs[i].prob);
+                value += probs[i].prob;
+            }
+
+            return probsRange;
+        }
     }
 
-    private Queue<(Area, (int x, int y))> pendingAreas = new ();
+    private Queue<(Area, (int x, int y))> pendingAreas = new();
 
     struct Area
     {
         ToppingType toppingType;
         SideType type;
         int size;
+
+        public SideType Type { get => type; }
+        public int Size { get => size; }
+
+        public Area (SideType sideType, int size, ToppingType toppingType = ToppingType.None)
+        {
+            this.toppingType = toppingType;
+            this.type = sideType;
+            this.size = size;
+        }
     }
 
     private void Start()
     {
-        
+
         pieces = new Piece[size.x, size.y];
         PieceData.Initialize();
-        
+
         CreatePiece((0, 0), SideType.None);
+        GenerateAreas();
     }
 
     private void CreatePiece(in (float x, float y) cord, SideType prevSide)
@@ -132,6 +206,8 @@ public class LevelGenerator : MonoBehaviour
         };
 
         PieceData.ChangeColor(cur, GetProbability(((int)cord.x, (int)cord.y), prevSide));
+
+        if (cur.Type == SideType.Water) pendingAreas.Enqueue((new Area(SideType.Water, 7), ((int)cord.x, (int)cord.y)));
 
         for (int i = 0; i < directions.Length; i++)
         {
@@ -162,6 +238,7 @@ public class LevelGenerator : MonoBehaviour
 
         var probsPerSide = new Dictionary<SideType, int>();
         (SideType type, int prob) best = (SideType.None, int.MaxValue);
+        
 
         for (int i = 0; i < directions.Length; i++)
         {
@@ -189,7 +266,7 @@ public class LevelGenerator : MonoBehaviour
 
         if (best.type == SideType.None) best.type = SideType.Grass;
 
-        return  this.probs[best.type].GetNextType(UnityEngine.Random.Range(0, 100));
+        return this.probs[best.type].GetNextType(UnityEngine.Random.Range(0, 100));
     }
 
     private bool IsCellValid(in (int x, int y) cord, int idx, out Vector2Int newPos)
@@ -261,16 +338,68 @@ public class LevelGenerator : MonoBehaviour
 
     private void GenerateAreas()
     {
-        var curArea = pendingAreas.Dequeue();
-
-        for (int i = 0; i < directions.Length; i++)
+        while (pendingAreas.Count > 0)
         {
-            Vector2Int cur = default;
-            (int x, int y) nextDir = (curArea.Item2 + directions[i].x), curArea.Item2.y + directions[i].y));
+            var curArea = pendingAreas.Dequeue();
+            int count = curArea.Item1.Size;
 
-            if (!IsCellValid(curArea.Item2, i, out cur)) continue;
+            while (count > 0)
+            {
+                Piece piece = null;
+                var type = GetNextRandomType(curArea.Item1.Type, curArea.Item2, out piece);
 
-            var nextType = pieces[cur.x, cur.y].Type;
+                if (type == SideType.None) continue;
+
+                PieceData.ChangeColor(piece, curArea.Item1.Type);
+                count--;
+            } 
         }
+    }
+
+    private SideType GetNextRandomType(SideType type, (int x, int y) pos, out Piece nextPiece)
+    {
+        (int idx, int count) best = (-1, int.MaxValue);
+
+        nextPiece = null;
+        SideType nextSideType = SideType.None;
+        int rand = UnityEngine.Random.Range(0, 9);
+
+        if (rand < 3)
+        {
+            best = (UnityEngine.Random.Range(0, 6), 0);
+        }
+        else
+            for (int i = 0; i < directions.Length; i++)
+            {
+                Vector2Int curDir = default;
+
+                if (!IsCellValid(pos, i, out curDir)) continue;
+
+                var cur = pieces[curDir.x, curDir.y];
+                if (cur.Type == type) continue;
+
+                var curCount = 0;
+
+                for (int j = 0; j < cur.types.Length; j++)
+                {
+                    if (cur.Type == type)
+                    {
+                        curCount++;
+                    }
+                }
+
+                if (curCount < best.count)
+                    best = (i, curCount);
+            }
+
+        probs[type].ResetProbs(type);
+        probs[type].IncreaseProb(type, 10);
+        nextSideType = probs[type].GetNextType(UnityEngine.Random.Range(0, 100));
+
+        if (best.idx == -1)
+            return SideType.None;
+
+        nextPiece = pieces[directions[best.idx].x + pos.x, directions[best.idx].y + pos.y];
+        return nextSideType;
     }
 }

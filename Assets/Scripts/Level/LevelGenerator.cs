@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.ConstrainedExecution;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 public class LevelGenerator : MonoBehaviour
 {
@@ -20,66 +22,86 @@ public class LevelGenerator : MonoBehaviour
         new Vector2Int(-1, -1),
     };
 
-    readonly Dictionary<SideType, Probs> probs = new()
+    readonly Dictionary<SideType, Probs<SideType>> probs = new()
     {
-        { SideType.Grass, new Probs((SideType.Grass, .70f), (SideType.Water, .02f), (SideType.Dust, .25f)) } ,
-        { SideType.Water, new Probs((SideType.Grass, .15f), (SideType.Water, .75f), (SideType.Dust, .10f)) },
-        { SideType.Dust, new Probs((SideType.Grass, .15f), (SideType.Water, .10f), (SideType.Dust, .75f)) },
+        { SideType.Grass, new (SideType.Grass, (SideType.Water, .001f), (SideType.Dust, .25f)) } ,
+        { SideType.Water, new (SideType.Water, (SideType.Grass, .15f)) },
+        { SideType.Dust, new (SideType.Dust, (SideType.Grass, .15f)) },
     };
 
-    struct Probs
+    readonly Dictionary<ToppingType, Probs<ToppingType>> toppingProbs = new()
     {
-        (SideType type, int prob)[] probs;
+        { ToppingType.Wood, new (ToppingType.Wood, (ToppingType.Rock, .001f)) }
+    };
 
-        public Probs(params (SideType type, float prob)[] ps)
+    struct Probs <T> where T : Enum
+    {
+        (T type, float prob)[] probs;
+
+        public Probs(T MainType, params (T type, float prob)[] ps)
         {
-            for (int i = 0; i < ps.Length; i++)
+            List<(T type, float prob)> sorted = new();
+            float mainVal = 0;
+            foreach (var value in ps)
             {
-                for (int j = 0; j < ps.Length; j++)
-                {
-                    if (ps[i].prob < ps[j].prob)
-                    {
-                        var value1 = ps[j];
+                sorted.Add(value);
+                mainVal += value.prob;
+            }
 
-                        ps[j] = ps[i];
-                        ps[i] = value1;
+            sorted.Add((MainType, 1 - mainVal));
+
+            for (int i = 0; i < sorted.Count; i++)
+            {
+                for (int j = 0; j < sorted.Count; j++)
+                {
+                    if (sorted[i].prob < sorted[j].prob)
+                    {
+                        var value1 = sorted[j];
+
+                        sorted[j] = sorted[i];
+                        sorted[i] = value1;
                     }
                 }
             }
 
-            probs = new (SideType type, int prob)[ps.Length];
+            this.probs = new (T type, float prob)[sorted.Count];
             int curVal = 0;
 
-            for (int i = 0; i < ps.Length; i++)
+            for (int i = 0; i < sorted.Count; i++)
             {
-                curVal = (int)(ps[i].prob * 100 + curVal);
-                probs[i] = (ps[i].type, curVal);
+                curVal = (int)(sorted[i].prob * 100 + curVal);
+                this.probs[i] = ((sorted[i].type, curVal));
             }
         }
 
-        public SideType GetHI(int rand)
+        public T GetNextType(int rand)
         {
-            SideType type = probs[0].type;
+            T type = probs[0].type;
 
+            float curDis = 0;
+            for (int i = 0; i < probs.Length; i++)
+            {
+                if (rand > curDis && rand <= probs[i].prob)
+                {
+                    type = probs[i].type;
+                    break;
+                }
 
-
-            if (rand < probs[0].prob)
-            {
-                type = probs[0].type;
-            }
-            else if (rand < probs[1].prob)
-            {
-                type = probs[1].type;
-            }
-            else if (rand < probs[2].prob)
-            {
-                type = probs[2].type;
+                curDis = probs[i].prob;
             }
 
             return type;
         }
     }
 
+    private Queue<(Area, (int x, int y))> pendingAreas = new ();
+
+    struct Area
+    {
+        ToppingType toppingType;
+        SideType type;
+        int size;
+    }
 
     private void Start()
     {
@@ -92,29 +114,24 @@ public class LevelGenerator : MonoBehaviour
 
     private void CreatePiece(in (float x, float y) cord, SideType prevSide)
     {
-        
+
         if (cord.x < 0 || cord.x >= size.x ||
-            cord.y < 0 || cord.y >= size.y) 
+            cord.y < 0 || cord.y >= size.y)
             return;
-        
+
         ref var cur = ref pieces[(int)cord.x, (int)cord.y];
 
-        if (!cur)
+        if (cur) return;
+
+        var piece = PieceData.GetPiece(TileType.Solid);
+        Vector3 curPos = GetOffset(cord);
+
+        cur = piece with
         {
-            
-            var piece = PieceData.GetPiece(TileType.Solid);
-            cur = piece;
+            piece = Instantiate(piece.piece, position: curPos, rotation: Quaternion.identity, parent: transform)
+        };
 
-            Vector3 curPos = new Vector3(cord.x * 2, 0, cord.y * -1.75f);
-
-            if ((cord.y % 2 != 0))
-                curPos += Vector3.right;
-
-            cur.piece = Instantiate(piece.piece, position: curPos, rotation: Quaternion.identity, parent: transform);
-            PieceData.ChangeColor(cur, GetProbability(prevSide));
-        }
-        else
-            return;
+        PieceData.ChangeColor(cur, GetProbability(((int)cord.x, (int)cord.y), prevSide));
 
         for (int i = 0; i < directions.Length; i++)
         {
@@ -126,17 +143,81 @@ public class LevelGenerator : MonoBehaviour
                 y = cord.y + newCords.y
             };
 
-            CreatePiece((newPos.x, newPos.y), cur[i]);
+            CreatePiece((newPos.x, newPos.y), cur.Type);
+        }
+
+        static Vector3 GetOffset((float x, float y) cord)
+        {
+            Vector3 curPos = new Vector3(cord.x * 2, 0, cord.y * -1.75f);
+
+            if ((cord.y % 2 != 0))
+                curPos += Vector3.right;
+            return curPos;
         }
     }
 
-    private SideType GetProbability(SideType type)
+    private SideType GetProbability(in (int x, int y) cord, SideType type)
     {
-        if (type == SideType.None)
-            return SideType.Grass;
+        if (type == SideType.None) type = SideType.Grass;
 
-        return  probs[type].GetHI(UnityEngine.Random.Range(0, 100));
-        
+        var probsPerSide = new Dictionary<SideType, int>();
+        (SideType type, int prob) best = (SideType.None, int.MaxValue);
+
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector2Int cur = default;
+
+            if (!IsCellValid(cord, i, out cur)) continue;
+
+            var nextType = pieces[cur.x, cur.y].Type;
+
+            //if (pieces[cord.x, cord.y].piece || nextType != pieces[cord.x, cord.y].Type) continue;
+
+
+
+            if (!probsPerSide.ContainsKey(nextType))
+                probsPerSide.Add(nextType, 1);
+            else
+                probsPerSide[nextType] = probsPerSide[nextType] + 1;
+        }
+
+        foreach (var key in probsPerSide.Keys)
+        {
+            if (probsPerSide[key] < best.prob)
+                best.prob = probsPerSide[key];
+        }
+
+        if (best.type == SideType.None) best.type = SideType.Grass;
+
+        return  this.probs[best.type].GetNextType(UnityEngine.Random.Range(0, 100));
+    }
+
+    private bool IsCellValid(in (int x, int y) cord, int idx, out Vector2Int newPos)
+    {
+        newPos = new Vector2Int
+        {
+            x = cord.x + ((cord.y % 2 == 0 && directions[idx].y != 0) ? 0 : directions[idx].x),
+            y = cord.y + directions[idx].y
+        };
+
+        if (newPos.x < 0 || newPos.x >= size.x ||
+        newPos.y < 0 || newPos.y >= size.y)
+            return false;
+
+        if (!pieces[newPos.x, newPos.y] || pieces[newPos.x, newPos.y].Type == SideType.None)
+            return false;
+
+        return true;
+    }
+
+    private int GetOpositeSide(int idx, int max)
+    {
+        idx += 3;
+
+        if (idx >= max)
+            idx -= max;
+
+        return idx;
     }
 
     private void GetProbability(int x, int y, SideType sideType)
@@ -176,5 +257,20 @@ public class LevelGenerator : MonoBehaviour
 
         //    //PieceData.GetPiece(TileType.Solid, );
         //}
+    }
+
+    private void GenerateAreas()
+    {
+        var curArea = pendingAreas.Dequeue();
+
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector2Int cur = default;
+            (int x, int y) nextDir = (curArea.Item2 + directions[i].x), curArea.Item2.y + directions[i].y));
+
+            if (!IsCellValid(curArea.Item2, i, out cur)) continue;
+
+            var nextType = pieces[cur.x, cur.y].Type;
+        }
     }
 }

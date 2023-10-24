@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Pieces
   m_EditorClassIdentifier: 
   materials:
-  - material: {fileID: 2237609596182688317, guid: d162b28177df4eb4cad8e5c9a77bb05e, type: 3}
+  - material: {fileID: -2505642851634945670, guid: 7acf35c18331f8a439a0b17b5f6a089b, type: 3}
     type: 1
   - material: {fileID: -2867747967464863736, guid: fec111a984410614584b1a9553d74584, type: 3}
     type: 2
@@ -25,13 +25,13 @@ MonoBehaviour:
     type: 4
   pieces:
   - piece: {fileID: 439441880705897246, guid: 9c252e06b471e7549a1c50bc11f4832a, type: 3}
-    type: 0
-    types: 010000000100000001000000010000000100000001000000
+    type: 1
+    types: 040000000400000004000000040000000400000004000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 1736940223809554420, guid: 596903d80f68bb140951713e20eea547, type: 3}
-    type: 0
+    type: 1
     types: 020000000100000001000000010000000100000001000000
     materialIdx: 00000000
     completePiece: 1
@@ -139,3 +139,5 @@ MonoBehaviour:
     completePiece: 1
     rotation: 0
   initialized: 1
+  ho:
+    value: 0

@@ -21,22 +21,74 @@ public enum TileType
     Road,
 }
 
+[Serializable]
+public struct Area
+{
+    [SerializeField] SideType type;
+    [SerializeField] int minSize;
+    [SerializeField] int maxSize;
+    [SerializeField, Range(0, 1)] bool randomDirection;
+    [SerializeField, Range(0, 1)] float randDirProb2;
+    [SerializeField, Range(0, 6)] int deepSearch;
+    [Space(), Header("Toppings")]
+    [SerializeField] ToppingType toppingType;
+    [SerializeField, Range(0, 1)]float toppingProb;
+
+    int _size;
+
+    public SideType Type { get => type; }
+    public int Size { get => _size; private set => _size = value; }
+
+    public Area(SideType sideType, ToppingType toppingType = ToppingType.None)
+    {
+        this.toppingType = toppingType;
+        toppingProb = 0f;
+        this.type = sideType;
+        minSize = 0;
+        maxSize = 10;
+        randomDirection = false;
+        randDirProb2 = 7;
+        deepSearch = 2;
+        this._size = 6;
+    }
+
+    public int RandomSize() => UnityEngine.Random.Range(minSize, maxSize);
+}
+
 [CreateAssetMenu(fileName = "Persona", menuName = "ScriptableObjects/LevelPiece", order = 2)]
 public class PieceCollection : ScriptableObject
 {
     [SerializeField] MaterialData[] materials;
     [SerializeField] Piece[] pieces;
+    [SerializeField] PieceRelations[] relations;
+    [SerializeField] Area[] areas;
     [SerializeField] bool initialized = false;
-    [SerializeField] Hi ho;
 
     [Serializable]
-    public record Hi
+    public struct PieceRelation
     {
-        public int value;
+        [SerializeField] SideType type;
+        [SerializeField] float probability;
+
+        public SideType Type { get { return type; } }
+        public float Probability { get { return probability; } }
+    }
+
+    [Serializable]
+    public struct PieceRelations
+    {
+        [SerializeField] SideType type;
+        [SerializeField] List<PieceRelation> relations;
+
+        public SideType Type { get { return type; } }
+        public List<PieceRelation> Relations { get { return relations; } }
     }
 
     Dictionary<TileType, List<Piece>> _pieces;
     Dictionary<SideType, Material> _materials;
+    Dictionary<SideType, Area> _areas;
+    Dictionary<SideType, Probabilities<SideType>> _pieceProbs;
+    Dictionary<SideType, Probabilities<ToppingType>> _toppingProbs;
 
     public void Initialize()
     {
@@ -88,6 +140,21 @@ public class PieceCollection : ScriptableObject
             _materials.Add(mat.type, mat.material); 
         }
 
+        _areas = new();
+        foreach (var area in areas)
+            _areas.Add(area.Type, area);
+
+        _pieceProbs = new();
+        foreach (var piece in relations)
+        {
+            List<(SideType, float)> values = new();
+
+            foreach (var relation in piece.Relations)
+                values.Add((relation.Type, relation.Probability));
+
+            _pieceProbs.Add(piece.Type, new(piece.Type, values.ToArray()));
+        }
+
         initialized = true;
     }
 
@@ -108,7 +175,12 @@ public class PieceCollection : ScriptableObject
 
     }
 
-    public void ChangeColor(Piece piece, SideType target, int idx = 0)
+    public Area GetArea(SideType type)
+    {
+        return _areas[type];
+    }
+
+    public void ChangeType(Piece piece, SideType target, int idx = 0)
     {
         if (target == SideType.None) return;
 
@@ -117,6 +189,17 @@ public class PieceCollection : ScriptableObject
         renderer.materials[piece.GetIdxMaterial(idx)].CopyPropertiesFromMaterial(_materials[target]);
 
         piece.Type = target;
+    }
+
+    public Probabilities<SideType> GetProbability(SideType type) => _pieceProbs[type];
+
+    public void ChangeColor(Piece piece, SideType target, int idx = 0)
+    {
+        if (target == SideType.None) return;
+
+        var renderer = piece.piece.GetComponentInChildren<MeshRenderer>(false);
+
+        renderer.materials[piece.GetIdxMaterial(idx)].CopyPropertiesFromMaterial(_materials[target]);
     }
 }
 

@@ -27,8 +27,8 @@ public struct Area
     [SerializeField] SideType type;
     [SerializeField] int minSize;
     [SerializeField] int maxSize;
-    [SerializeField, Range(0, 1)] bool randomDirection;
-    [SerializeField, Range(0, 1)] float randDirProb2;
+    [SerializeField, Range(0, 1)] float randomDirection;
+    //[SerializeField, Range(0, 1)] float randDirProb2;
     [SerializeField, Range(0, 6)] int deepSearch;
     [Space(), Header("Toppings")]
     [SerializeField] ToppingType toppingType;
@@ -38,6 +38,8 @@ public struct Area
 
     public SideType Type { get => type; }
     public int Size { get => _size; private set => _size = value; }
+    public float RandomDirection { get => randomDirection; }
+    public int DeepSearch { get => deepSearch; }
 
     public Area(SideType sideType, ToppingType toppingType = ToppingType.None)
     {
@@ -46,13 +48,13 @@ public struct Area
         this.type = sideType;
         minSize = 0;
         maxSize = 10;
-        randomDirection = false;
-        randDirProb2 = 7;
+        randomDirection = 3;
+        //randDirProb2 = 7;
         deepSearch = 2;
         this._size = 6;
     }
 
-    public int RandomSize() => UnityEngine.Random.Range(minSize, maxSize);
+    public int GetRandomSize() => UnityEngine.Random.Range(minSize, maxSize);
 }
 
 [CreateAssetMenu(fileName = "Persona", menuName = "ScriptableObjects/LevelPiece", order = 2)]

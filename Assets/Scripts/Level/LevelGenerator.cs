@@ -10,9 +10,6 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] Piece[,] pieces;
     [SerializeField] Vector2Int size = new Vector2Int(10, 10);
 
-    [Space(), Header("Settings")]
-    [SerializeField, Range(0, 9)] float randDirProb2 = 3;
-
     readonly Vector2Int[] directions =
     {
         new Vector2Int(1, -1),
@@ -40,38 +37,45 @@ public class LevelGenerator : MonoBehaviour
 
     private void CreatePiece(in (float x, float y) cord, SideType prevSide)
     {
-        if (cord.x < 0 || cord.x >= size.x ||
-            cord.y < 0 || cord.y >= size.y)
-            return;
+        var curCord = cord;
 
-        ref var cur = ref pieces[(int)cord.x, (int)cord.y];
-
-        if (cur) return;
-
-        var piece = PieceData.GetPiece(TileType.Solid);
-        Vector3 curPos = GetOffset(cord);
-
-        cur = piece with
+        while (true)
         {
-            piece = Instantiate(piece.piece, position: curPos, rotation: Quaternion.identity, parent: transform)
-        };
+            if (curCord.x < 0 || curCord.x >= size.x ||
+            curCord.y < 0 || curCord.y >= size.y)
+                return;
 
-        PieceData.ChangeType(cur, GetProbabilityPerSide(((int)cord.x, (int)cord.y), prevSide));
+            ref var cur = ref pieces[(int)curCord.x, (int)curCord.y];
 
-        if (cur.Type != SideType.Grass) 
-            pendingAreas.Enqueue((PieceData.GetArea(cur.Type), new((int)cord.x, (int)cord.y)));
+            if (cur) return;
 
-        Vector2 newPos = new Vector2(cord.x + 1, cord.y);
+            var piece = PieceData.GetPiece(TileType.Solid);
+            Vector3 curPos = GetOffset(curCord);
 
-        if (newPos.x >= size.x)
-        {
-            newPos.x = 0;
-            newPos.y++;
+            cur = piece with
+            {
+                piece = Instantiate(piece.piece, position: curPos, rotation: Quaternion.identity, parent: transform)
+            };
+
+            PieceData.ChangeType(cur, GetProbabilityPerSide(((int)curCord.x, (int)curCord.y), prevSide));
+
+            if (cur.Type != SideType.Grass)
+                pendingAreas.Enqueue((PieceData.GetArea(cur.Type), new((int)curCord.x, (int)curCord.y)));
+
+            Vector2 newPos = new Vector2(curCord.x + 1, curCord.y);
+
+            if (newPos.x >= size.x)
+            {
+                newPos.x = 0;
+                newPos.y++;
+            } 
+
+            if (newPos.y >= size.y) return;
+
+            curCord = (newPos.x, newPos.y);
         }
 
-        if (newPos.y >= size.y) return;
-
-        CreatePiece((newPos.x, newPos.y), cur.Type);
+        //CreatePiece((newPos.x, newPos.y), cur.Type);
 
         static Vector3 GetOffset((float x, float y) cord)
         {
@@ -161,23 +165,25 @@ public class LevelGenerator : MonoBehaviour
         while (pendingAreas.Count > 0)
         {
             var curArea = pendingAreas.Dequeue();
-            int count = curArea.Item1.RandomSize();
-            GetNextRandomType(curArea.Item1.Type, curArea.Item2, ref count);
+            var size = curArea.Item1.GetRandomSize();
+            GetNextRandomType(curArea.Item1.Type, curArea.Item2, size, size);
+
+            PieceData.GetProbability(curArea.Item1.Type).ResetProbs();
         }
     }
 
-    private SideType GetNextRandomType(SideType type, in Vector2Int pos, ref int count)
+    private SideType GetNextRandomType(SideType type, in Vector2Int pos, in int size, int times)
     {
         Piece nextPiece = null;
-        if (count <= 0) return SideType.None;
+        if (times <= 0) return SideType.None;
 
         //(int idx, int count, Vector2Int pos) best = (-1, int.MaxValue, default);
 
         SideType nextSideType = SideType.None;
-        float rand = UnityEngine.Random.Range(0f, 9f);
+        float rand = UnityEngine.Random.Range(0f, 1f);
         Vector2Int newDir = default;
 
-        if (rand < randDirProb2)
+        if (rand < PieceData.GetArea(type).RandomDirection)
         {
             int dirIdx = UnityEngine.Random.Range(0, 6);
 
@@ -185,7 +191,7 @@ public class LevelGenerator : MonoBehaviour
 
             if (!IsCellValid(pos, dirIdx, out newDir, out _) || pieces[newDir.x, newDir.y].Type == type)
             {
-                GetNextRandomType(type, new(pos.x, pos.y), ref count);
+                GetNextRandomType(type, new(pos.x, pos.y), in size, times);
                 return SideType.None;
             }
 
@@ -193,39 +199,33 @@ public class LevelGenerator : MonoBehaviour
         }
         else
         {
-            //for (int i = 0; i < directions.Length; i++)
-            //{
-            //    Vector2Int curDir = default;
-            //    Piece piece = null;
-            //    if (!IsCellValid(pos, i, out curDir, out piece)) continue;
-
-            //    if (piece.Type == type) continue;
-
-            //    var curCount = 0;
-
-            //    for (int j = 0; j < directions.Length; j++)
-            //    {
-            //        Piece curNeighbour = null;
-            //        if (!IsCellValid(new(curDir.x, curDir.y), j, out _, out curNeighbour)) continue;
-
-            //        if (curNeighbour.Type == type)
-            //            curCount++;
-            //    }
-
-            //    if (curCount > 0 && curCount < best.count)
-            //        best = (i, curCount, curDir);
-            //}
-            if (!FindBestPieceInCircle(type, pos, out nextPiece, out newDir, out _, PieceData.GetArea(type).Size))
+            if (!FindBestPieceInCircle(type, pos, out nextPiece, out newDir, out _, PieceData.GetArea(type).DeepSearch))
+            {
+                print("None");
                 return SideType.None;
+            }
+            print("----");
         }
 
-        PieceData.GetProbability(type).IncreaseProb(type, 30 / count);
-        --count;
-
+        PieceData.GetProbability(type).IncreaseProb(type, 30 / times);
         nextSideType = PieceData.GetProbability(type).GetNextType(UnityEngine.Random.Range(0, 100));
-        PieceData.ChangeType(nextPiece, nextSideType);
+
+        if (nextSideType == type)
+            times--;
         
-        GetNextRandomType(type, new(newDir.x, newDir.y), ref count);
+        print($"{nextSideType} - times: " + times);
+        try
+        {
+            PieceData.ChangeType(nextPiece, nextSideType);
+        }
+        catch (NullReferenceException ex)
+        {
+
+            throw;
+        }
+        //PieceData.ChangeColor(nextPiece, SideType.Mudd);
+        
+        GetNextRandomType(type, new(newDir.x, newDir.y), in size, times);
 
         return nextSideType;
     }
@@ -238,40 +238,36 @@ public class LevelGenerator : MonoBehaviour
         if (deep <= 0) return false;
         
         (Vector2Int pos, int times) besto = (default, int.MaxValue);
-        HexCircleMovement circleMove = new HexCircleMovement(size, pos, deep);
+        HexCircleMovement circleMove;
+        HexCircleMovement circleMove2;
 
-        foreach (var curPos in circleMove)
+        while (deep > 0)
         {
-            times = 0;
+            circleMove = new HexCircleMovement(size, pos, deep);
 
-            foreach (var neighbour in circleMove)
+            foreach (var curPos in circleMove)
             {
-                if (pieces[neighbour.x, neighbour.y].Type == type)
-                    times++;
+                times = 0;
+                circleMove2 = new HexCircleMovement(size, curPos, 1);
+
+                foreach (var neighbour in circleMove2)
+                {
+                    if (pieces[neighbour.x, neighbour.y].Type == type)
+                        times++;
+                }
+
+                if (times < besto.times && times > 0)
+                    besto = (curPos, times);
             }
 
-            if (times < besto.times)
-                besto = (curPos, times);
+            --deep;
         }
 
-        if (deep - 1 > 0)
-        {
-            (Vector2Int pos, int times) newBest = default;
-            FindBestPieceInCircle(type, besto.pos, out _, out besto.pos, out besto.times, deep - 1);
-
-            if (newBest.times > besto.times)
-            {
-                times = newBest.times;
-                newPos = newBest.pos;
-            }
-
-            return true;
-        }
-
-        if (besto.times > 0)
+        if (besto.times > 0 && besto.times != int.MaxValue)
         {
             times = besto.times;
             newPos = besto.pos;
+            piece = pieces[newPos.x, newPos.y];
             return true;
         }
 
@@ -288,7 +284,7 @@ public class HexCircleMovement : IEnumerable<Vector2Int>
 
     public class HCMEnumerator : IEnumerator<Vector2Int>
     {
-        readonly (int x, int y, int times)[] _directions =
+        (int x, int y, int times)[] _directions =
         {
             ((1, -1, 1)),
             ((1, 1, 1)),
@@ -314,13 +310,13 @@ public class HexCircleMovement : IEnumerable<Vector2Int>
             _curRadius = 0;
         }
 
-        public Vector2Int Current => Current;
+        public Vector2Int Current => _current;
 
-        object IEnumerator.Current => Current;
+        object IEnumerator.Current => _current;
 
         public void Dispose()
         {
-            //throw new NotImplementedException();
+            _directions = null;
         }
 
         public bool MoveNext()
@@ -329,6 +325,8 @@ public class HexCircleMovement : IEnumerable<Vector2Int>
 
             while (!isValid)
             {
+                if (_idx >= _directions.Length) return false;
+
                 var newPos = new Vector2Int
                 {
                     x = _current.x + ((((_current.y % 2 == 0 && _directions[_idx].x > 0) || (_current.y % 2 != 0 && _directions[_idx].x < 0))
@@ -336,7 +334,9 @@ public class HexCircleMovement : IEnumerable<Vector2Int>
                     y = _current.y + _directions[_idx].y
                 };
 
-                if (_idx >= _directions.Length) return false;
+                if (newPos.x >= 0 && newPos.x < _size.x &&
+                newPos.y >= 0 && newPos.y < _size.y)
+                    isValid = true;
 
                 _current = newPos;
                 if (++_curRadius >= _directions[_idx].times + _deep - 1)
@@ -344,10 +344,6 @@ public class HexCircleMovement : IEnumerable<Vector2Int>
                     ++_idx;
                     _curRadius = 0;
                 }
-
-                if (newPos.x >= 0 || newPos.x < _size.x ||
-                newPos.y >= 0 || newPos.y < _size.y)
-                    isValid = true;
             }
 
             return true;

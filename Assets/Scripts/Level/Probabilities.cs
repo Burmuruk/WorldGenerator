@@ -4,10 +4,12 @@ using System.Collections.Generic;
 public struct Probabilities<T> where T : Enum
 {
     (T type, float prob)[] probs;
+    (T type, float prob)[] _backUpPobs;
 
     public Probabilities(T MainType, params (T type, float prob)[] ps)
     {
         List<(T type, float prob)> sorted = new();
+
         float mainVal = 0;
         foreach (var value in ps)
         {
@@ -39,6 +41,9 @@ public struct Probabilities<T> where T : Enum
             curVal = sorted[i].prob * 100 + curVal;
             this.probs[i] = (sorted[i].type, curVal);
         }
+
+        _backUpPobs = new (T type, float prob)[probs.Length];
+        probs.CopyTo(_backUpPobs, 0);
     }
 
     public T GetNextType(float rand)
@@ -60,28 +65,9 @@ public struct Probabilities<T> where T : Enum
         return type;
     }
 
-    public void ResetProbs(T type)
+    public void ResetProbs()
     {
-        var ranges = GetRanges();
-        int firstIdx = 0;
-
-        for (int i = 0; i < ranges.Length; i++)
-        {
-            if (probs[i].type.CompareTo(type) == 0)
-                firstIdx = i;
-        }
-
-        for (int i = 0, j = 1; i < ranges.Length; i++)
-        {
-            if (i == firstIdx)
-            {
-                probs[0] = (ranges[i].type, ranges[i].prob);
-                continue;
-            }
-
-            probs[j] = (ranges[i].type, ranges[i].prob);
-            j++;
-        }
+        _backUpPobs.CopyTo(probs, 0);
     }
 
     public void IncreaseProb(T type, float increasement)

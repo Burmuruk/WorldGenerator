@@ -24,7 +24,7 @@ public class LevelGenerator : MonoBehaviour
         { ToppingType.Wood, new(ToppingType.Wood, (ToppingType.Rock, .001f)) }
     };
     private Queue<(Area, Vector2Int)> pendingAreas = new();
-
+    
     private void Start()
     {
 
@@ -214,16 +214,9 @@ public class LevelGenerator : MonoBehaviour
             times--;
         
         print($"{nextSideType} - times: " + times);
-        try
-        {
-            PieceData.ChangeType(nextPiece, nextSideType);
-        }
-        catch (NullReferenceException ex)
-        {
 
-            throw;
-        }
-        //PieceData.ChangeColor(nextPiece, SideType.Mudd);
+        PieceData.ChangeType(nextPiece, nextSideType);
+        //PieceData.ChangeColor(nextPiece, SideType.Dust);
         
         GetNextRandomType(type, new(newDir.x, newDir.y), in size, times);
 
@@ -237,31 +230,37 @@ public class LevelGenerator : MonoBehaviour
         times = 0;
         if (deep <= 0) return false;
         
-        (Vector2Int pos, int times) besto = (default, int.MaxValue);
+        (Vector2Int pos, int times) besto = (default, 0);
         HexCircleMovement circleMove;
         HexCircleMovement circleMove2;
 
         while (deep > 0)
         {
             circleMove = new HexCircleMovement(size, pos, deep);
-
+            
             foreach (var curPos in circleMove)
             {
+                
                 times = 0;
                 circleMove2 = new HexCircleMovement(size, curPos, 1);
+
+                if (pieces[curPos.x, curPos.y].Type == type) continue;
 
                 foreach (var neighbour in circleMove2)
                 {
                     if (pieces[neighbour.x, neighbour.y].Type == type)
+                    {
                         times++;
+                    }
                 }
 
-                if (times < besto.times && times > 0)
+                if (times > besto.times && times > 0)
                     besto = (curPos, times);
             }
 
             --deep;
         }
+            
 
         if (besto.times > 0 && besto.times != int.MaxValue)
         {
@@ -286,12 +285,13 @@ public class HexCircleMovement : IEnumerable<Vector2Int>
     {
         (int x, int y, int times)[] _directions =
         {
-            ((1, -1, 1)),
-            ((1, 1, 1)),
-            ((-1, 1, 1)),
-            ((-1, 0, 1)),
-            ((-1, -1, 1)),
-            ((1, 0, 0)),
+            (1, -1, 1),
+            (1, 1, 1),
+            (-1, 1, 1),
+            (-1, 0, 1),
+            (-1, -1, 1),
+            (1, -1, 1),
+            (1, 0, 0),
         };
         Vector2Int _size;
         Vector2Int _pos;

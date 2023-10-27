@@ -155,8 +155,8 @@ MonoBehaviour:
   - type: 5
     minSize: 20
     maxSize: 30
-    randomDirection: 0.711
-    deepSearch: 3
+    randomDirection: 0.77
+    deepSearch: 2
     toppingType: 0
     toppingProb: 0
   - type: 4

@@ -23,10 +23,109 @@ MonoBehaviour:
     type: 5
   - material: {fileID: -4770390735465466038, guid: d16f867c5f976ac4baa0f06e65a1a12b, type: 3}
     type: 4
+  - material: {fileID: 2237609596182688317, guid: d162b28177df4eb4cad8e5c9a77bb05e, type: 3}
+    type: 6
+  toppings:
+  - _type: 1
+    _piece: {fileID: 4550345686225338136, guid: 472c6b333f360f44fa77c6e729c90632, type: 3}
+    _haveSpline: 1
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 2
+    _piece: {fileID: 4110594931987143561, guid: cec337c9963d6d94a838b3dca91421a0, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 3
+    _piece: {fileID: 9037714633746415716, guid: 99d7b8d380974cf4c8afd79c173d77e1, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 4
+    _piece: {fileID: 84135714477766602, guid: 2a7608252cd546d4c82c77f1cf6c7231, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 5
+    _piece: {fileID: 919132149155446097, guid: 1995e2d50592e1549a91b7c053fd429c, type: 3}
+    _haveSpline: 0
+    _sides: 000000000100000000000000010000000000000000000000
+  - _type: 5
+    _piece: {fileID: 919132149155446097, guid: de8bc50397edb9944b703842ef2a5343, type: 3}
+    _haveSpline: 0
+    _sides: 000000000100000000000000010000000000000000000000
+  - _type: 5
+    _piece: {fileID: 919132149155446097, guid: 84bb2591a5f723943b0f91cbfd82cd4e, type: 3}
+    _haveSpline: 0
+    _sides: 000000000100000001000000000000000000000000000000
+  - _type: 9
+    _piece: {fileID: 919132149155446097, guid: 3ac354525032b1746aa606730a4a1276, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 10
+    _piece: {fileID: 919132149155446097, guid: 21ae373523adba44aa2cdadc09b6239d, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 11
+    _piece: {fileID: 919132149155446097, guid: 8d25f6c58d991c549be050f0284d7cbc, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 12
+    _piece: {fileID: 919132149155446097, guid: 4a01a5c68fb3eca45a41c4e4345fcd02, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 14
+    _piece: {fileID: 919132149155446097, guid: 7deea64382269744c958f49a493f5b43, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 15
+    _piece: {fileID: 919132149155446097, guid: ab5c1ede98cf13c46a112b5c1abaa1d6, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 16
+    _piece: {fileID: 919132149155446097, guid: 8dc35879314b8df48815b1effb22687a, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 18
+    _piece: {fileID: 919132149155446097, guid: 060b5d476f8364e4f9f20480bcc9eef9, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 19
+    _piece: {fileID: 919132149155446097, guid: c2fb9fcb9a9d6e3458197dc291a57ddf, type: 3}
+    _haveSpline: 0
+    _sides: 020000000000000000000000000000000000000000000000
+  - _type: 13
+    _piece: {fileID: 919132149155446097, guid: 73ee7c0300823624cb268edfbf4d281a, type: 3}
+    _haveSpline: 0
+    _sides: 
+  - _type: 17
+    _piece: {fileID: 919132149155446097, guid: d6211f931d146274095c66efa88f621c, type: 3}
+    _haveSpline: 0
+    _sides: 
+  - _type: 17
+    _piece: {fileID: 919132149155446097, guid: cc2f90a98bf466340bc33fec5a20c46c, type: 3}
+    _haveSpline: 0
+    _sides: 
+  toppingGroups:
+  - type: 6
+    pieces:
+    - {fileID: 6559978255866283037, guid: 7559c6412adfaf44daeaa7378b2429b2, type: 3}
+    - {fileID: 7757400793276707489, guid: f5c3399fc5a4e7640b72b2c8bdd6299a, type: 3}
+    - {fileID: 713849528738012644, guid: da26d7878f5532a49b6456426d5dab73, type: 3}
+    haveSpline: 0
+    sides: 
+  - type: 8
+    pieces:
+    - {fileID: 453744690016516200, guid: ad9d298b5eed1fd42a08af7c0e95c7b4, type: 3}
+    - {fileID: 3085301245647985125, guid: 2ff089b94e7ffd64b877ee14be22399a, type: 3}
+    - {fileID: 6632999393708650951, guid: 668a3404e829df744a1df0fc09ad5a59, type: 3}
+    haveSpline: 0
+    sides: 
+  - type: 7
+    pieces:
+    - {fileID: 4225056970331933505, guid: 81e414565a6e110458199ad8fa783c14, type: 3}
+    haveSpline: 0
+    sides: 
   pieces:
   - piece: {fileID: 439441880705897246, guid: 9c252e06b471e7549a1c50bc11f4832a, type: 3}
     type: 1
-    types: 050000000500000005000000050000000500000005000000
+    types: 060000000600000006000000060000000600000006000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
@@ -140,16 +239,27 @@ MonoBehaviour:
     rotation: 0
   relations:
   - type: 1
-    relations:
+    pieceRelations:
     - type: 5
-      probability: 0.002
+      probability: 0.005
+    - type: 6
+      probability: 0.009
+    toppingRelations:
+    - type: 6
+      probability: 0.09
+    - type: 8
+      probability: 0.001
   - type: 5
-    relations:
+    pieceRelations:
     - type: 1
-      probability: 0.1
-  - type: 4
-    relations:
+      probability: 0.3
+    toppingRelations: []
+  - type: 6
+    pieceRelations:
     - type: 1
+      probability: 0.03
+    toppingRelations:
+    - type: 7
       probability: 0.4
   areas:
   - type: 5
@@ -157,13 +267,19 @@ MonoBehaviour:
     maxSize: 30
     randomDirection: 0.77
     deepSearch: 2
-    toppingType: 0
-    toppingProb: 0
+    toppingTypes: []
   - type: 4
     minSize: 2
     maxSize: 5
     randomDirection: 0.818
     deepSearch: 2
-    toppingType: 0
-    toppingProb: 0
+    toppingTypes: []
+  - type: 6
+    minSize: 25
+    maxSize: 32
+    randomDirection: 0.818
+    deepSearch: 2
+    toppingTypes:
+    - type: 7
+      probability: 0.7
   initialized: 1

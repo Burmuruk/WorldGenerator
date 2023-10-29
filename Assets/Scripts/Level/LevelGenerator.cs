@@ -1,7 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Runtime.ConstrainedExecution;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
@@ -19,10 +20,6 @@ public class LevelGenerator : MonoBehaviour
         new Vector2Int(-1, 0),
         new Vector2Int(-1, -1),
     };
-    readonly Dictionary<ToppingType, Probabilities<ToppingType>> toppingProbs = new()
-    {
-        { ToppingType.Wood, new(ToppingType.Wood, (ToppingType.Rock, .001f)) }
-    };
     private Queue<(Area, Vector2Int)> pendingAreas = new();
     
     private void Start()
@@ -31,11 +28,33 @@ public class LevelGenerator : MonoBehaviour
         pieces = new Piece[size.x, size.y];
         PieceData.Initialize();
 
-        CreatePiece((0, 0), SideType.None);
+        GenerateContent((0, 0), SideType.None);
+        CreatePieces();
         GenerateAreas();
+        AddToppings();
+        GetStartPoint();
     }
 
-    private void CreatePiece(in (float x, float y) cord, SideType prevSide)
+    private void GetStartPoint()
+    {
+        bool isValid = false;
+
+        while (!isValid)
+        {
+            var randX = UnityEngine.Random.Range(0, size.x);
+            var randY = UnityEngine.Random.Range(0, size.y); 
+            ref var cur = ref pieces[randX, randY];
+            if (cur.Type == SideType.Grass && cur.Topping.Prefab == null)
+            {
+                //PieceData.ChangeType(cur, )
+                PieceData.ChangeColor(cur, SideType.Mudd);
+                SetTopping(ref cur, ToppingType.House, 2);
+                isValid = true;
+            }
+        }
+    }
+
+    private void GenerateContent(in (float x, float y) cord, SideType prevSide)
     {
         var curCord = cord;
 
@@ -50,14 +69,19 @@ public class LevelGenerator : MonoBehaviour
             if (cur) return;
 
             var piece = PieceData.GetPiece(TileType.Solid);
-            Vector3 curPos = GetOffset(curCord);
+            //Vector3 curPos = GetOffset(curCord);
 
-            cur = piece with
-            {
-                piece = Instantiate(piece.piece, position: curPos, rotation: Quaternion.identity, parent: transform)
+            //cur = piece with
+            //{
+            //    piece = Instantiate(piece.piece, position: curPos, rotation: Quaternion.identity, parent: transform)
+            //};
+            cur = piece with { 
+                piece = null,
+                Type = GetProbabilityPerSide(((int)curCord.x, (int)curCord.y), prevSide) 
+                //topping
             };
 
-            PieceData.ChangeType(cur, GetProbabilityPerSide(((int)curCord.x, (int)curCord.y), prevSide));
+            //PieceData.ChangeType(cur, GetProbabilityPerSide(((int)curCord.x, (int)curCord.y), prevSide));
 
             if (cur.Type != SideType.Grass)
                 pendingAreas.Enqueue((PieceData.GetArea(cur.Type), new((int)curCord.x, (int)curCord.y)));
@@ -77,13 +101,32 @@ public class LevelGenerator : MonoBehaviour
 
         //CreatePiece((newPos.x, newPos.y), cur.Type);
 
-        static Vector3 GetOffset((float x, float y) cord)
-        {
-            Vector3 curPos = new Vector3(cord.x * 2, 0, cord.y * -1.75f);
+    }
+    static Vector3 GetOffset((float x, float y) cord)
+    {
+        Vector3 curPos = new Vector3(cord.x * 2, 0, cord.y * -1.75f);
 
-            if ((cord.y % 2 != 0))
-                curPos += Vector3.right;
-            return curPos;
+        if ((cord.y % 2 != 0))
+            curPos += Vector3.right;
+        return curPos;
+    }
+
+    private void CreatePieces()
+    {
+        for (int i = 0; i < size.x; i++)
+        {
+            for (int j = 0; j < size.y; j++)
+            {
+                ref var cur = ref pieces[i, j];
+
+                Vector3 curPos = GetOffset((i,j));
+                cur = cur with
+                {
+                    piece = Instantiate(PieceData.GetPiece(TileType.Solid).piece, position: curPos, rotation: Quaternion.identity, parent: transform)
+                };
+
+                PieceData.ChangeColor(cur, cur.Type);
+            }
         }
     }
 
@@ -177,8 +220,6 @@ public class LevelGenerator : MonoBehaviour
         Piece nextPiece = null;
         if (times <= 0) return SideType.None;
 
-        //(int idx, int count, Vector2Int pos) best = (-1, int.MaxValue, default);
-
         SideType nextSideType = SideType.None;
         float rand = UnityEngine.Random.Range(0f, 1f);
         Vector2Int newDir = default;
@@ -201,10 +242,8 @@ public class LevelGenerator : MonoBehaviour
         {
             if (!FindBestPieceInCircle(type, pos, out nextPiece, out newDir, out _, PieceData.GetArea(type).DeepSearch))
             {
-                print("None");
                 return SideType.None;
             }
-            print("----");
         }
 
         PieceData.GetProbability(type).IncreaseProb(type, 30 / times);
@@ -213,8 +252,6 @@ public class LevelGenerator : MonoBehaviour
         if (nextSideType == type)
             times--;
         
-        print($"{nextSideType} - times: " + times);
-
         PieceData.ChangeType(nextPiece, nextSideType);
         //PieceData.ChangeColor(nextPiece, SideType.Dust);
         
@@ -272,6 +309,43 @@ public class LevelGenerator : MonoBehaviour
 
         return false;
     }
+
+    private void AddToppings()
+    {
+        for (int i = 0; i < size.x; i++)
+        {
+            for (int j = 0; j < size.y; j++)
+            {
+                ref var cur = ref pieces[i, j];
+                Vector3 curPos = GetOffset((i, j));
+                var topp = PieceData.GetRandomTopp(cur.Type);
+
+                if (topp.HasValue)
+                {
+                    SetTopping(ref cur, topp.Value);
+                    //Vector3 toppPosition = new(curPos.x, topp.Value.Prefab.transform.position.y, curPos.z);
+
+                    //topp.Value.SetPrefab(Instantiate(topp.Value.Prefab, toppPosition, Quaternion.identity, transform));
+                    //cur.SetTopping(topp.Value);
+                }
+            }
+        }
+    }
+
+    private void SetTopping(ref Piece piece, ToppingType type, uint rotation = 0)
+    {
+        SetTopping(ref piece, PieceData.GetTopping(type), rotation);
+    }
+
+    private void SetTopping(ref Piece piece, Topping topp, uint rotation = 0)
+    {
+        Vector3 curPos = new(piece.piece.transform.position.x, 0, piece.piece.transform.position.z);
+        Vector3 toppPosition = new(curPos.x, topp.Prefab.transform.position.y, curPos.z);
+
+        topp.SetPrefab(Instantiate(topp.Prefab, toppPosition, topp.Prefab.transform.rotation, transform));
+        topp.Rotate((int)rotation);
+        piece.SetTopping(topp);
+    }
 }
 
 public class HexCircleMovement : IEnumerable<Vector2Int>
@@ -279,7 +353,6 @@ public class HexCircleMovement : IEnumerable<Vector2Int>
     Vector2Int _size;
     Vector2Int _pos;
     int _deep;
-    HCMEnumerator _numerator;
 
     public class HCMEnumerator : IEnumerator<Vector2Int>
     {

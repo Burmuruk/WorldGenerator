@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using WorldG.Patrol;
+using System.Linq;
 
 public enum SideType
 {
@@ -10,7 +12,8 @@ public enum SideType
     Road,
     Mudd,
     Dust,
-    Water
+    Water,
+    Woods,
 }
 
 public enum TileType
@@ -19,6 +22,13 @@ public enum TileType
     Solid,
     Transition,
     Road,
+}
+
+public enum ToppingSide
+{
+    None,
+    Connection,
+    Entrance,
 }
 
 [Serializable]
@@ -30,9 +40,9 @@ public struct Area
     [SerializeField, Range(0, 1)] float randomDirection;
     //[SerializeField, Range(0, 1)] float randDirProb2;
     [SerializeField, Range(0, 6)] int deepSearch;
+
     [Space(), Header("Toppings")]
-    [SerializeField] ToppingType toppingType;
-    [SerializeField, Range(0, 1)]float toppingProb;
+    [SerializeField] PieceRelation<ToppingType>[] toppingTypes;
 
     int _size;
 
@@ -40,11 +50,11 @@ public struct Area
     public int Size { get => _size; private set => _size = value; }
     public float RandomDirection { get => randomDirection; }
     public int DeepSearch { get => deepSearch; }
+    public PieceRelation<ToppingType>[] ToppingTypes { get => toppingTypes; }
 
-    public Area(SideType sideType, ToppingType toppingType = ToppingType.None)
+    public Area(SideType sideType)
     {
-        this.toppingType = toppingType;
-        toppingProb = 0f;
+        toppingTypes = null;
         this.type = sideType;
         minSize = 0;
         maxSize = 10;
@@ -57,45 +67,104 @@ public struct Area
     public int GetRandomSize() => UnityEngine.Random.Range(minSize, maxSize);
 }
 
+[Serializable]
+public struct Topping
+{
+    [SerializeField] ToppingType _type;
+    [SerializeField] GameObject _piece;
+    [SerializeField] bool _haveSpline;
+    [SerializeField] ToppingSide[] _sides;
+    PatrolController _patrol;
+
+    public GameObject Prefab { get => _piece; }
+    public ToppingType Type { get { return _type; } }
+    public PatrolController Patrol 
+    { 
+        get 
+        {
+            if (!_haveSpline) return null;
+
+            var patrol = _piece.GetComponent<PatrolController>();
+
+            if (patrol == null) throw new NullReferenceException();
+
+            return patrol;
+        } 
+    }
+
+    public Topping(ToppingType type, GameObject piece, ToppingSide[] sides, bool haveSpline = false)
+    {
+        _type = type;
+        _piece = piece;
+        _sides = sides;
+        _haveSpline = haveSpline;
+
+        if (haveSpline)
+            _patrol = new PatrolController();
+        else
+            _patrol = null;
+    }
+
+    public void SetPrefab(GameObject prefab) => _piece = prefab;
+
+    public void Rotate(int rotation) =>
+        _piece.transform.Rotate(new(0, rotation * 60, 0));
+}
+
+[Serializable]
+public struct ToppingGroup
+{
+    [SerializeField] public ToppingType type;
+    [SerializeField] public GameObject[] pieces;
+    [SerializeField] public bool haveSpline;
+    [SerializeField] public ToppingSide[] sides;
+}
+
+[Serializable]
+public struct PieceRelation<T> where T : Enum
+{
+    [SerializeField] T type;
+    [SerializeField] float probability;
+
+    public T Type { get { return type; } }
+    public float Probability { get { return probability; } }
+}
+
+[Serializable]
+public struct PieceRelations
+{
+    [SerializeField] SideType type;
+    [SerializeField] PieceRelation<SideType>[] pieceRelations;
+    [SerializeField] PieceRelation<ToppingType>[] toppingRelations;
+
+    public SideType Type { get { return type; } }
+    public PieceRelation<SideType>[] SideTypes { get { return pieceRelations; } }
+    public PieceRelation<ToppingType>[] ToppingTypes { get { return toppingRelations; } }
+}
+
 [CreateAssetMenu(fileName = "Persona", menuName = "ScriptableObjects/LevelPiece", order = 2)]
 public class PieceCollection : ScriptableObject
 {
     [SerializeField] MaterialData[] materials;
+    [SerializeField] Topping[] toppings;
+    [SerializeField] ToppingGroup[] toppingGroups;
     [SerializeField] Piece[] pieces;
     [SerializeField] PieceRelations[] relations;
     [SerializeField] Area[] areas;
     [SerializeField] bool initialized = false;
 
-    [Serializable]
-    public struct PieceRelation
-    {
-        [SerializeField] SideType type;
-        [SerializeField] float probability;
-
-        public SideType Type { get { return type; } }
-        public float Probability { get { return probability; } }
-    }
-
-    [Serializable]
-    public struct PieceRelations
-    {
-        [SerializeField] SideType type;
-        [SerializeField] List<PieceRelation> relations;
-
-        public SideType Type { get { return type; } }
-        public List<PieceRelation> Relations { get { return relations; } }
-    }
-
     Dictionary<TileType, List<Piece>> _pieces;
     Dictionary<SideType, Material> _materials;
     Dictionary<SideType, Area> _areas;
+    Dictionary<ToppingType, List<Topping>> _toppings;
+    Dictionary<SideType, Probabilities<ToppingType>> _toppingAreas;
     Dictionary<SideType, Probabilities<SideType>> _pieceProbs;
     Dictionary<SideType, Probabilities<ToppingType>> _toppingProbs;
 
     public void Initialize()
     {
         //if (initialized) return;
-
+        //Pieces
         _pieces = new ();
 
         var chunck = new List<List<Piece>>()
@@ -136,31 +205,95 @@ public class PieceCollection : ScriptableObject
         _pieces.Add(TileType.Transition, chunck[1]);
         _pieces.Add(TileType.Solid, chunck[2]);
 
+        //Materials
         _materials = new();
         foreach (var mat in materials)
         {
             _materials.Add(mat.type, mat.material); 
         }
 
-        _areas = new();
-        foreach (var area in areas)
-            _areas.Add(area.Type, area);
-
+        //Pieces' probabilities
         _pieceProbs = new();
         foreach (var piece in relations)
         {
             List<(SideType, float)> values = new();
 
-            foreach (var relation in piece.Relations)
+            foreach (var relation in piece.SideTypes)
                 values.Add((relation.Type, relation.Probability));
 
             _pieceProbs.Add(piece.Type, new(piece.Type, values.ToArray()));
         }
 
+        //toppings
+        _toppings = new();
+        foreach (var topping in toppings)
+        {
+            if (!_toppings.ContainsKey(topping.Type))
+                _toppings.Add(topping.Type, new());
+            
+            _toppings[topping.Type].Add(topping);
+        }
+
+        //toppings groups
+        foreach (var group in toppingGroups)
+        {
+            if (!_toppings.ContainsKey(group.type))
+                _toppings.Add(group.type, new());
+
+            foreach (var topp in group.pieces)
+                foreach (var piece in group.pieces)
+                {
+                    _toppings[group.type].Add(new Topping(group.type, piece, group.sides, group.haveSpline));
+                }
+        }
+
+        //topping Probabilities
+        _toppingProbs = new();
+        foreach (var relation in relations)
+        {
+            List<(ToppingType type, float prob)> toppings = new();
+
+            foreach (var topp in relation.ToppingTypes)
+            {
+                toppings.Add((topp.Type, topp.Probability));
+            }
+
+            _toppingProbs.Add(relation.Type, new(ToppingType.None, toppings.ToArray()));
+        }
+
+        //Areas
+        _areas = new();
+        _toppingAreas = new();
+        foreach (var area in areas)
+        {
+            _areas.Add(area.Type, area);
+
+            List<(ToppingType type, float prob)> toppings = new();
+
+            foreach (var topp in area.ToppingTypes)
+            {
+                toppings.Add((topp.Type, topp.Probability));
+            }
+
+            _toppingAreas.Add(area.Type, new(ToppingType.None, toppings.ToArray()));
+        }
+
+        //Areas' toppings
+
+
         initialized = true;
     }
 
     public Piece GetPiece(TileType tileType)
+    {
+        //Initialize();
+
+        var rand = UnityEngine.Random.Range(0, _pieces[tileType].Count);
+
+        return _pieces[tileType][rand];
+    }
+
+    public Piece GetRandomPiece(TileType tileType)
     {
         //Initialize();
 
@@ -182,13 +315,35 @@ public class PieceCollection : ScriptableObject
         return _areas[type];
     }
 
+    public Topping? GetRandomTopp(SideType sideType)
+    {
+        var nextType = _toppingProbs[sideType].GetNextType(UnityEngine.Random.Range(0, 100));
+
+        if (nextType == ToppingType.None) return null;
+
+        return _toppings[nextType][UnityEngine.Random.Range(0, _toppings[nextType].Count)];
+    }
+
+    public Topping GetTopping(ToppingType type)
+    {
+        int idx = 0;
+
+        if (_toppings[type].Count > 1)
+            idx = UnityEngine.Random.Range(0, _toppings[type].Count);
+        
+        return _toppings[type][idx];
+    }
+
     public void ChangeType(Piece piece, SideType target, int idx = 0)
     {
         if (target == SideType.None) return;
 
-        var renderer = piece.piece.GetComponentInChildren<MeshRenderer>(false);
+        if (piece)
+        {
+            var renderer = piece.piece.GetComponentInChildren<MeshRenderer>(false);
 
-        renderer.materials[piece.GetIdxMaterial(idx)].CopyPropertiesFromMaterial(_materials[target]);
+            renderer.materials[piece.GetIdxMaterial(idx)].CopyPropertiesFromMaterial(_materials[target]);
+        }
 
         piece.Type = target;
     }

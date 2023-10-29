@@ -5,13 +5,24 @@ public enum ToppingType
 {
     None,
     Castle,
-    Farm,
+    Mill,
     House,
     Tower,
     Wall,
     Tree,
-    Wood,
+    Woods,
     Rock,
+    Archery,
+    Barracks,
+    Bridge,
+    BridgePro,
+    FarmPlot,
+    Market,
+    Lumbermill,
+    Mine,
+    Gate,
+    Watermill,
+    well
 }
 
 [Serializable]
@@ -24,7 +35,7 @@ public record Piece
     [SerializeField] public bool completePiece;
     [SerializeField] public int rotation;
 
-    private GameObject topping;
+    private Topping _topping;
 
     public SideType Type 
     { 
@@ -47,9 +58,7 @@ public record Piece
         get;
         private set;
     }
-
     public SideType this[int i] { get => types[i]; }
-
     public int Rotation
     {
         get => rotation;
@@ -58,6 +67,7 @@ public record Piece
             rotation = value;
         }
     }
+    public Topping Topping { get => _topping; }
 
     public Piece(int rotation, bool completePiece = true)
     {
@@ -67,14 +77,14 @@ public record Piece
         this.rotation = rotation;
         materialIdx = null;
         this.type = SideType.Grass;
-        topping = null;
+        _topping = default;
         ToppingType = ToppingType.None;
     }
 
-    public void SetTopping(GameObject topping, ToppingType type)
+    public void SetTopping(Topping topping, int rotation = 0)
     {
-        ToppingType = type;
-        this.topping = topping;
+        this._topping = topping;
+        ToppingType = topping.Type;
     }
 
     public int GetIdxMaterial(int idx)

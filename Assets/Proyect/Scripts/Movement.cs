@@ -1,0 +1,157 @@
+using System;
+using UnityEngine;
+
+public class Movement : MonoBehaviour
+{
+    [Header("Movement")]
+    [SerializeField] float speed = 3;
+    [SerializeField] float rotationVelocity = 2;
+    [SerializeField] bool turnWhileMove = true;
+
+    [Header("Behaviour")]
+    //[SerializeField] float visionDistance = 4;
+    //[SerializeField] float visionAngle = 90;
+    [SerializeField] float minDistance = .8f;
+
+    public Action OnFinished;
+
+    private bool canMove = false;
+    private Vector3 destiny = default;
+    private bool canTurn = false;
+    private float turnAngle = 0;
+    private float curTurnAngle = 0;
+    private Transform finalTAngle = null;
+    private Transform target = null;
+    private Vector3 Target 
+    {
+        get
+        {
+            return target.position - transform.position + Vector3.up * (transform.position.y - target.position.y);
+        }
+        
+        set
+        {
+            if (Vector3.Distance(transform.position, value) >= minDistance)
+            {
+                destiny = value;
+                canMove = true;
+            }
+            else
+            {
+                target = default;
+                destiny = default;
+            }
+        }
+    }
+
+    Vector3 Destiny
+    {
+        get => destiny;
+
+        set
+        {
+            if (Vector3.Distance(transform.position, value) >= minDistance)
+            {
+                destiny = value;
+            }
+
+            else
+            {
+                destiny = default;
+            }
+        }
+    }
+
+    private void Awake()
+    {
+    }
+
+    void Start()
+    {
+        
+    }
+
+    void Update()
+    {
+        if (canMove)
+        {
+            if (target && Target.magnitude >= minDistance)
+            {
+                transform.Translate(Target * Time.deltaTime * speed, Space.World);
+
+                if (turnWhileMove)
+                {
+                    var dir = target.position - transform.position;
+                    var angle = Vector3.SignedAngle(dir, transform.forward, Vector3.up);
+
+                    if (angle < -5 || angle > 5)
+                        transform.Rotate(Vector3.up, Time.deltaTime * rotationVelocity * angle < 0 ? 1 : -1, Space.Self);
+                }
+
+            }
+            else if (!target && Vector3.Distance(transform.position, Destiny) >= minDistance)
+            {
+                var newPosition = Destiny - transform.position + Vector3.up * (transform.position.y -destiny.y);
+                transform.Translate(newPosition * Time.deltaTime * speed);
+            }
+            else
+            {
+                canMove = false;
+                OnFinished.Invoke();
+            }
+        }
+
+        if (canTurn)
+        {
+            if (!finalTAngle && curTurnAngle < Mathf.Abs(turnAngle))
+            {
+                transform.Rotate(Vector3.up, rotationVelocity * Time.deltaTime * (turnAngle < 0 ? -1 : 1));
+                curTurnAngle += rotationVelocity * Time.deltaTime;
+            }
+            else if (finalTAngle && (transform.rotation.eulerAngles.y - finalTAngle.position.y) > 1)
+            {
+                transform.Rotate(Vector3.up, finalTAngle.position.y);
+            }
+            else
+            {
+                curTurnAngle = 0;
+                canTurn = false;
+                OnFinished.Invoke();
+            }
+        }
+    }
+
+    public void MoveTo(Vector3 direction) => Destiny = direction;
+
+    public void MoveTo(Transform target)
+    {
+        if (!target)
+        {
+            OnFinished?.Invoke();
+            return;
+        }
+
+        canMove = true;
+        this.target = target;
+    }
+
+    public void Cancel() => Destiny = default;
+
+    public void TurnTo(Transform target)
+    {
+        if (!target)
+        {
+            OnFinished?.Invoke();
+            return;
+        }
+
+        finalTAngle = target;
+        canTurn = true;
+    }
+
+    public void TurnTo(float angle)
+    {
+        turnAngle = angle;
+        canTurn = true;
+    }
+}

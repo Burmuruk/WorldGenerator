@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public struct Probabilities<T> where T : Enum
 {
     (T type, float prob)[] probs;
-    (T type, float prob)[] _backUpPobs;
+    (T type, float prob)[] _backUpProbs;
 
     public Probabilities(T MainType, params (T type, float prob)[] ps)
     {
         List<(T type, float prob)> sorted = new();
-
+        List<(T type, float prob)> mySorted = new();
         float mainVal = 0;
         foreach (var value in ps)
         {
@@ -42,8 +43,8 @@ public struct Probabilities<T> where T : Enum
             this.probs[i] = (sorted[i].type, curVal);
         }
 
-        _backUpPobs = new (T type, float prob)[probs.Length];
-        probs.CopyTo(_backUpPobs, 0);
+        _backUpProbs = new (T type, float prob)[probs.Length];
+        probs.CopyTo(_backUpProbs, 0);
     }
 
     public T GetNextType(float rand)
@@ -67,7 +68,7 @@ public struct Probabilities<T> where T : Enum
 
     public void ResetProbs()
     {
-        _backUpPobs.CopyTo(probs, 0);
+        _backUpProbs.CopyTo(probs, 0);
     }
 
     public void IncreaseProb(T type, float increasement)

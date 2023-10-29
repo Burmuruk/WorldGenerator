@@ -31,6 +31,16 @@ public enum ToppingSide
     Entrance,
 }
 
+public enum CharacterType
+{
+    None,
+    Archer,
+    Knight,
+    Hood,
+    Skeleton,
+    Viking
+}
+
 [Serializable]
 public struct Area
 {
@@ -131,6 +141,27 @@ public struct PieceRelation<T> where T : Enum
 }
 
 [Serializable]
+public struct Character
+{
+    [SerializeField] CharacterType _type;
+    [SerializeField] GameObject _prefab;
+    //[SerializeField] int _rotation;
+
+    public CharacterType Type { get { return _type; } }
+    public GameObject Prefab { get { return _prefab; } }
+
+    public void SetPiece(GameObject piece)
+    {
+        _prefab = piece;
+    }
+
+    public void Rotate(int rotation)
+    {
+        _prefab.transform.Rotate(new(0, rotation * 60, 0));
+    }
+}
+
+[Serializable]
 public struct PieceRelations
 {
     [SerializeField] SideType type;
@@ -149,12 +180,14 @@ public class PieceCollection : ScriptableObject
     [SerializeField] Topping[] toppings;
     [SerializeField] ToppingGroup[] toppingGroups;
     [SerializeField] Piece[] pieces;
+    [SerializeField] Character[] characters;
     [SerializeField] PieceRelations[] relations;
     [SerializeField] Area[] areas;
     [SerializeField] bool initialized = false;
 
     Dictionary<TileType, List<Piece>> _pieces;
     Dictionary<SideType, Material> _materials;
+    Dictionary< CharacterType, Character> _characters;
     Dictionary<SideType, Area> _areas;
     Dictionary<ToppingType, List<Topping>> _toppings;
     Dictionary<SideType, Probabilities<ToppingType>> _toppingAreas;
@@ -280,6 +313,13 @@ public class PieceCollection : ScriptableObject
 
         //Areas' toppings
 
+        //Characters
+        _characters = new();
+        foreach (var character in characters)
+        {
+            _characters.Add(character.Type,  character);
+        }
+
 
         initialized = true;
     }
@@ -302,11 +342,39 @@ public class PieceCollection : ScriptableObject
         return _pieces[tileType][rand];
     }
 
-    public void GetPiece(TileType tileType, params (int idx, SideType sideType)[] sides)
+    public Piece GetPiece(TileType tileType, params (int idx, SideType sideType)[] sides)
     {
+        var roads = _pieces[TileType.Road];
+        List<int> selectedRoads = new();
 
+        for(int i = 0; i < roads.Count; i++)
+            if (roads[i].Entrances == sides.Length)
+                selectedRoads.Add(i);
 
-        //return _pieces[tileType][]
+        bool finished = false;
+        var copy = roads[selectedRoads[0]] with { Rotation = roads[selectedRoads[0]].Rotation + 1 };
+
+        for (int i = 0; i < _pieces[TileType.Road][0].types.Length; i++)
+        {
+            for (int j = 0; j < sides.Length; j++)
+            {
+                finished = true;
+                if (sides[j].sideType != copy[sides[j].idx])
+                {
+                    finished = false;
+                    break;
+                }
+            }
+
+            if (finished) 
+                break;
+            else
+                copy.Rotate(copy.Rotation + 1);
+        }
+
+        if (!finished) return null;
+
+        return copy;
 
     }
 
@@ -334,6 +402,11 @@ public class PieceCollection : ScriptableObject
         return _toppings[type][idx];
     }
 
+    public Character GetCharacter(CharacterType type)
+    {
+        return _characters[type];
+    }
+
     public void ChangeType(Piece piece, SideType target, int idx = 0)
     {
         if (target == SideType.None) return;
@@ -346,6 +419,17 @@ public class PieceCollection : ScriptableObject
         }
 
         piece.Type = target;
+    }
+
+    public Piece RepleacePiece(ref Piece piece, TileType type, params (int idx, SideType)[] sides)
+    {
+        piece.Topping.Prefab.gameObject.SetActive(false);
+        piece.piece.gameObject.SetActive(false);
+        Piece newPiece = null;
+
+        newPiece = type == TileType.Road ? GetPiece(type, sides) : GetPiece(type);
+
+        return newPiece;
     }
 
     public Probabilities<SideType> GetProbability(SideType type) => _pieceProbs[type];

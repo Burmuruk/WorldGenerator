@@ -35,6 +35,8 @@ public record Piece
     [SerializeField] public bool completePiece;
     [SerializeField] public int rotation;
 
+    private int _entrances;
+
     private Topping _topping;
 
     public SideType Type 
@@ -65,9 +67,24 @@ public record Piece
         set
         {
             rotation = value;
+
+            Rotate(value);
         }
     }
     public Topping Topping { get => _topping; }
+
+    public int Entrances
+    {
+        get
+        {
+            if (_entrances != 0) return _entrances;
+
+            foreach (var t in types)
+                if (t == type) _entrances++;
+
+            return _entrances;
+        }
+    }
 
     public Piece(int rotation, bool completePiece = true)
     {
@@ -79,6 +96,7 @@ public record Piece
         this.type = SideType.Grass;
         _topping = default;
         ToppingType = ToppingType.None;
+        _entrances = 0;
     }
 
     public void SetTopping(Topping topping, int rotation = 0)
@@ -90,6 +108,21 @@ public record Piece
     public int GetIdxMaterial(int idx)
     {
         return materialIdx[idx];
+    }
+
+    public void Rotate(int value)
+    {
+        var last = types[0];
+        int curIdx = 0;
+        for (int i = 1; i < types.Length; i++)
+        {
+            curIdx += value;
+            if (curIdx >= types.Length) curIdx -= types.Length;
+
+            var cur = types[curIdx];
+            types[curIdx] = last;
+            last = cur;
+        }
     }
 
     //public override bool Equals(object obj)

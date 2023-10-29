@@ -16,8 +16,6 @@ public class ClickController : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-
         }
     }
 }

@@ -49,6 +49,15 @@ public class LevelGenerator : MonoBehaviour
                 //PieceData.ChangeType(cur, )
                 PieceData.ChangeColor(cur, SideType.Mudd);
                 SetTopping(ref cur, ToppingType.House, 2);
+
+                var newDir = MovePosition(new(randX, randY), 2);
+                var newPos = GetOffset(newDir);
+                SetCharacter(newPos, CharacterType.Knight, 2);
+                //SetTopping(ref cur, ToppingType.);
+
+                ref var newPiece = ref pieces[newDir.x, newDir.y];
+                PieceData.RepleacePiece(ref newPiece, TileType.Road, (5, SideType.Road));
+
                 isValid = true;
             }
         }
@@ -102,6 +111,12 @@ public class LevelGenerator : MonoBehaviour
         //CreatePiece((newPos.x, newPos.y), cur.Type);
 
     }
+
+    static Vector3 GetOffset(Vector2Int cord)
+    {
+        return GetOffset((cord.x, cord.y));
+    }
+
     static Vector3 GetOffset((float x, float y) cord)
     {
         Vector3 curPos = new Vector3(cord.x * 2, 0, cord.y * -1.75f);
@@ -345,6 +360,19 @@ public class LevelGenerator : MonoBehaviour
         topp.SetPrefab(Instantiate(topp.Prefab, toppPosition, topp.Prefab.transform.rotation, transform));
         topp.Rotate((int)rotation);
         piece.SetTopping(topp);
+    }
+
+    private void SetCharacter(Vector3 pos, CharacterType type, uint rotation = 0)
+    {
+        SetCharacter(pos, PieceData.GetCharacter(type), rotation);
+    }
+
+    private void SetCharacter(Vector3 pos, Character character, uint rotation = 0)
+    {
+        Vector3 toppPosition = new(pos.x, character.Prefab.transform.position.y, pos.z);
+
+        character.SetPiece(Instantiate(character.Prefab, toppPosition, character.Prefab.transform.rotation, transform));
+        character.Rotate((int)rotation);
     }
 }
 

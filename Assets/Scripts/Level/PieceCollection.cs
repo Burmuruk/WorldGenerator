@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using WorldG.Patrol;
 using System.Linq;
+using Unity.VisualScripting;
 
 public enum SideType
 {
@@ -211,23 +212,29 @@ public class PieceCollection : ScriptableObject
         {
             SideType lastType = pieces[i][0];
             bool isSolid = true;
+            pieces[i].ResetEntrances();
 
-            foreach (var tileType in pieces[i].types)
+            foreach (var sideType in pieces[i].Types)
             {
-                if (tileType == SideType.Road)
+                if (sideType == SideType.Road)
                 {
+                    pieces[i].TileType = TileType.Road;
                     chunck[0].Add(pieces[i]);
                     isSolid = false;
                     break;
                 }
-                else if (lastType != tileType)
+                else if (lastType != sideType)
                 {
+                    pieces[i].TileType = TileType.Transition;
                     chunck[1].Add(pieces[i]);
                     isSolid = false;
                     break;
                 }
                 else
+                {
+                    pieces[i].TileType = TileType.Solid;
                     isSolid = true;
+                }
             }
 
             if (isSolid)
@@ -344,38 +351,106 @@ public class PieceCollection : ScriptableObject
 
     public Piece GetPiece(TileType tileType, params (int idx, SideType sideType)[] sides)
     {
-        var roads = _pieces[TileType.Road];
-        List<int> selectedRoads = new();
+        var piece = FindPieceByRoads(tileType, sides);
 
-        for(int i = 0; i < roads.Count; i++)
-            if (roads[i].Entrances == sides.Length)
-                selectedRoads.Add(i);
+        if (piece == null) return default;
 
-        bool finished = false;
-        var copy = roads[selectedRoads[0]] with { Rotation = roads[selectedRoads[0]].Rotation + 1 };
+        var (go, ttype, sType, sTypes, mats, rot, comp) = piece;
+        var copy = new Piece(go, ttype, sType, sTypes, mats, rot, comp);
+        
+        bool matched = RotateUntilMatch(ref copy, sides);
 
-        for (int i = 0; i < _pieces[TileType.Road][0].types.Length; i++)
-        {
-            for (int j = 0; j < sides.Length; j++)
-            {
-                finished = true;
-                if (sides[j].sideType != copy[sides[j].idx])
-                {
-                    finished = false;
-                    break;
-                }
-            }
-
-            if (finished) 
-                break;
-            else
-                copy.Rotate(copy.Rotation + 1);
-        }
-
-        if (!finished) return null;
+        if (!matched) return default;
 
         return copy;
 
+        bool RotateUntilMatch(ref Piece copy, in (int idx, SideType sideType)[] sides)
+        {
+            bool finished = false;
+
+            for (int i = 0; i < copy.Types.Length; i++)
+            {
+                for (int j = 0; j < sides.Length; j++)
+                {
+                    finished = true;
+                    if (sides[j].sideType != copy[sides[j].idx])
+                    {
+                        finished = false;
+                        break;
+                    }
+                }
+
+                if (finished)
+                    break;
+                else
+                    copy.Rotation += 1;
+            }
+
+            return finished;
+        }
+    }
+
+    private Piece FindPieceByRoads(TileType tileType, params (int idx, SideType sideType)[] sides)
+    {
+        var roads = _pieces[tileType];
+        List<int> selectedRoads = new();
+
+        for (int i = 0; i < roads.Count; i++)
+            if (roads[i].Entrances != null && roads[i].Entrances.Length == sides.Length)
+                selectedRoads.Add(i);
+
+        if (selectedRoads.Count <= 0) return default;
+
+        if (selectedRoads.Count == 1) return roads[selectedRoads[0]];
+
+        List<uint> distances = new();
+        for (int i = 1; i < sides.Length; i++)
+        {
+            if (sides[i].idx > sides[i - 1].idx)
+                distances.Add((uint)Mathf.Abs(sides[i].idx - sides[i - 1].idx));
+            else
+                distances.Add((uint)Mathf.Abs(sides[i - 1].idx - sides[i].idx));
+        }
+        int idx = 0;
+        bool founded = false;
+
+        for (idx = 0; idx < selectedRoads.Count; idx++)
+        {
+            List<uint> disCopy = new();
+            var cur = roads[selectedRoads[idx]];
+
+            for (int j = 0; j < distances.Count; j++)
+                disCopy.Add(distances[j]);
+
+            for (int j = 1; j < cur.Entrances.Length; j++)
+            {
+                uint value;
+
+                if (cur.Entrances[j] > cur.Entrances[j - 1])
+                    value = (uint)Mathf.Abs(cur.Entrances[j] - cur.Entrances[j - 1]);
+                else
+                    value = (uint)Mathf.Abs(cur.Entrances[j - 1] - cur.Entrances[j]);
+
+                founded = false;
+
+                for (int k = 0; k < disCopy.Count; k++)
+                {
+                    if (value == disCopy[k])
+                    {
+                        founded = true;
+                        disCopy.RemoveAt(k);
+                        break;
+                    }
+                }
+
+                if (!founded) break;
+            }
+
+            if (founded)
+                break;
+        }
+
+        return founded ? roads[selectedRoads[idx]] : default;
     }
 
     public Area GetArea(SideType type)
@@ -413,23 +488,12 @@ public class PieceCollection : ScriptableObject
 
         if (piece)
         {
-            var renderer = piece.piece.GetComponentInChildren<MeshRenderer>(false);
+            var renderer = piece.Prefab.GetComponentInChildren<MeshRenderer>(false);
 
             renderer.materials[piece.GetIdxMaterial(idx)].CopyPropertiesFromMaterial(_materials[target]);
         }
 
         piece.Type = target;
-    }
-
-    public Piece RepleacePiece(ref Piece piece, TileType type, params (int idx, SideType)[] sides)
-    {
-        piece.Topping.Prefab.gameObject.SetActive(false);
-        piece.piece.gameObject.SetActive(false);
-        Piece newPiece = null;
-
-        newPiece = type == TileType.Road ? GetPiece(type, sides) : GetPiece(type);
-
-        return newPiece;
     }
 
     public Probabilities<SideType> GetProbability(SideType type) => _pieceProbs[type];
@@ -438,7 +502,7 @@ public class PieceCollection : ScriptableObject
     {
         if (target == SideType.None) return;
 
-        var renderer = piece.piece.GetComponentInChildren<MeshRenderer>(false);
+        var renderer = piece.Prefab.GetComponentInChildren<MeshRenderer>(false);
 
         renderer.materials[piece.GetIdxMaterial(idx)].CopyPropertiesFromMaterial(_materials[target]);
     }

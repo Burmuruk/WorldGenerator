@@ -125,7 +125,7 @@ MonoBehaviour:
   pieces:
   - piece: {fileID: 439441880705897246, guid: 9c252e06b471e7549a1c50bc11f4832a, type: 3}
     type: 1
-    types: 060000000600000006000000060000000600000006000000
+    types: 050000000500000005000000050000000500000005000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
@@ -136,103 +136,103 @@ MonoBehaviour:
     completePiece: 1
     rotation: 0
   - piece: {fileID: 1371249414794706277, guid: ceda6a00bdf87f74095c1f7c08e23c56, type: 3}
-    type: 0
-    types: 020000000100000001000000010000000200000001000000
+    type: 1
+    types: 020000000100000001000000020000000100000002000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 2825640708344600305, guid: f04a8ae885d3a704b9fe6a3ea8fcba4f, type: 3}
-    type: 0
+    type: 1
     types: 010000000200000001000000010000000200000001000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 896921491713854466, guid: d9062401b68026b4499caab2b7804a2b, type: 3}
-    type: 0
+    type: 1
     types: 010000000100000001000000010000000200000002000000
     materialIdx: 01000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 3306038236078829247, guid: 20ad6fe50a8be394f9c7747263c03ca9, type: 3}
-    type: 0
+    type: 1
     types: 020000000100000002000000010000000200000001000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 7384355563474957306, guid: 2c1d64a8c3430024ab725784f85bafa5, type: 3}
-    type: 0
+    type: 1
     types: 020000000100000001000000010000000200000002000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 1628778316812365229, guid: 0918c6b8659bdf94081cdbf9d71133ff, type: 3}
-    type: 0
+    type: 1
     types: 010000000200000001000000020000000200000001000000
     materialIdx: 01000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 1900846434760571856, guid: 3c34f9d145ffdec429f116178aefcc61, type: 3}
-    type: 0
+    type: 1
     types: 010000000200000001000000010000000200000002000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 1814787653426088953, guid: 866c0c22a05eddf4c92bceb3663185ee, type: 3}
-    type: 0
+    type: 1
     types: 020000000200000001000000010000000200000002000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 4644550982196097475, guid: 9b6942b71c2db844abc77ea7f24b042b, type: 3}
-    type: 0
+    type: 1
     types: 020000000100000002000000010000000200000002000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 7372623723446663522, guid: ee64be30c765c6c44ab919fbfcf673c6, type: 3}
-    type: 0
+    type: 1
     types: 010000000200000002000000010000000200000002000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 7948952655114863993, guid: 8bbe21da0020fe34c84230e75bd16ae7, type: 3}
-    type: 0
+    type: 1
     types: 020000000200000002000000020000000100000002000000
     materialIdx: 01000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 3463365209212423603, guid: 7aaa6e76c08789c45aea030880c71b7f, type: 3}
-    type: 0
+    type: 1
     types: 020000000200000002000000020000000200000002000000
     materialIdx: 01000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 5753249483724265523, guid: 5607756cad379054db20912a36e5022c, type: 3}
-    type: 0
+    type: 1
     types: 030000000300000003000000010000000100000001000000
     materialIdx: 0000000002000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 6340614598556896365, guid: 8439685f890738545aaf88f1ac11a543, type: 3}
-    type: 0
+    type: 5
     types: 050000000100000001000000050000000500000005000000
     materialIdx: 0100000002000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 5609393323868034230, guid: 049a46a00ff8fec489031ab95d857362, type: 3}
-    type: 0
+    type: 5
     types: 050000000500000005000000010000000100000001000000
     materialIdx: 0100000002000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 2639679268268270621, guid: 4688e7e2632ba8b4e8f367a1ad901287, type: 3}
-    type: 0
+    type: 5
     types: 010000000500000005000000010000000100000001000000
     materialIdx: 0100000002000000
     completePiece: 1
     rotation: 0
   - piece: {fileID: 8253803632419706102, guid: 7632f9a06ff8c004581b3a30d8fa1106, type: 3}
-    type: 0
+    type: 5
     types: 010000000100000001000000050000000500000005000000
     materialIdx: 0100000002000000
     completePiece: 1

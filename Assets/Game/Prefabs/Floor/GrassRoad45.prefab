@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 588280021680646696}
   m_Layer: 0
-  m_Name: GrassRoad65
+  m_Name: GrassRoad45
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -54,7 +54,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 10190b68295ab97489ecd16c6fb9563d, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 3.9999995
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 10190b68295ab97489ecd16c6fb9563d, type: 3}
       propertyPath: m_LocalRotation.w

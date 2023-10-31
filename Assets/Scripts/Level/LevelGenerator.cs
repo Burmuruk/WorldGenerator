@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.ConstrainedExecution;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
@@ -21,10 +20,12 @@ public class LevelGenerator : MonoBehaviour
         new Vector2Int(-1, -1),
     };
     private Queue<(Area, Vector2Int)> pendingAreas = new();
-    
+    private Dictionary<TileType, List<Piece>> _piecesPool;
+    private Dictionary<ToppingType, List<Topping>> _toppingsPool;
+    private Dictionary<CharacterType, List<Character>> _charactersPool;
+
     private void Start()
     {
-
         pieces = new Piece[size.x, size.y];
         PieceData.Initialize();
 
@@ -35,14 +36,29 @@ public class LevelGenerator : MonoBehaviour
         GetStartPoint();
     }
 
+    private void Update()
+    {
+        if (Input.GetMouseButtonUp(0))
+        {
+            RaycastHit hit;
+
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 200))
+            {
+                var cord = RemoveOffset(hit.collider.transform.position);
+                //PieceData.ChangeColor(pieces[cord.x, cord.y], SideType.Mudd);
+                SetRoad(cord);
+            }
+        }
+    }
+
     private void GetStartPoint()
     {
         bool isValid = false;
 
         while (!isValid)
         {
-            var randX = UnityEngine.Random.Range(0, size.x);
-            var randY = UnityEngine.Random.Range(0, size.y); 
+            var randX = UnityEngine.Random.Range(1, size.x - 1);
+            var randY = UnityEngine.Random.Range(1, size.y - 1); 
             ref var cur = ref pieces[randX, randY];
             if (cur.Type == SideType.Grass && cur.Topping.Prefab == null)
             {
@@ -56,7 +72,7 @@ public class LevelGenerator : MonoBehaviour
                 //SetTopping(ref cur, ToppingType.);
 
                 ref var newPiece = ref pieces[newDir.x, newDir.y];
-                PieceData.RepleacePiece(ref newPiece, TileType.Road, (5, SideType.Road));
+                RepleacePiece(ref newPiece, TileType.Road, (5, SideType.Road));
 
                 isValid = true;
             }
@@ -78,19 +94,14 @@ public class LevelGenerator : MonoBehaviour
             if (cur) return;
 
             var piece = PieceData.GetPiece(TileType.Solid);
-            //Vector3 curPos = GetOffset(curCord);
 
-            //cur = piece with
-            //{
-            //    piece = Instantiate(piece.piece, position: curPos, rotation: Quaternion.identity, parent: transform)
-            //};
-            cur = piece with { 
-                piece = null,
-                Type = GetProbabilityPerSide(((int)curCord.x, (int)curCord.y), prevSide) 
-                //topping
+            cur = piece with
+            {
+                Prefab = null,
+                Type = GetProbabilityPerSide(((int)curCord.x, (int)curCord.y), prevSide)
             };
-
-            //PieceData.ChangeType(cur, GetProbabilityPerSide(((int)curCord.x, (int)curCord.y), prevSide));
+            
+            //topping
 
             if (cur.Type != SideType.Grass)
                 pendingAreas.Enqueue((PieceData.GetArea(cur.Type), new((int)curCord.x, (int)curCord.y)));
@@ -107,9 +118,6 @@ public class LevelGenerator : MonoBehaviour
 
             curCord = (newPos.x, newPos.y);
         }
-
-        //CreatePiece((newPos.x, newPos.y), cur.Type);
-
     }
 
     static Vector3 GetOffset(Vector2Int cord)
@@ -126,6 +134,67 @@ public class LevelGenerator : MonoBehaviour
         return curPos;
     }
 
+    static Vector2Int RemoveOffset(Vector3 position)
+    {
+        Vector2Int curPos = default;
+
+        int x = (int)(position.x * .5f);
+        int y = (int)((position.z / -1.75f));
+
+        curPos += new Vector2Int(x, y);
+        return curPos;
+    }
+
+    public void SetRoad(in Vector2Int cord)
+    {
+        ref var cur = ref pieces[cord.x, cord.y];
+
+        if (cur.Topping.Prefab) return;
+        if (cur.Type == SideType.Water) return;
+
+        List<(int idx, SideType side)> connections = new();
+        HexCircleMovement mov = new HexCircleMovement(size, cord, 1);
+        int i = 0;
+
+        foreach (var nextPiece in mov)
+        {
+            if (nextPiece.x < 0 || nextPiece.x >= size.x ||
+                nextPiece.y < 0 || nextPiece.y >= size.y)
+            {
+                i++;
+                continue;
+            }
+            
+            ref var neighbour = ref pieces[nextPiece.x, nextPiece.y];
+            if (neighbour.TileType == TileType.Road && neighbour.Entrances.Length > 0 && neighbour[GetOpositeSide(i, neighbour.Types.Length)] != SideType.Road)
+            {
+                var sides = GetSidesOfConnectedRoad(ref neighbour, in i);
+
+                RepleacePiece(ref neighbour, TileType.Road, sides);
+                connections.Add((i, SideType.Road));
+            }
+            i++;
+        }
+
+        if (connections.Count == 0) return;
+
+        RepleacePiece(ref cur, TileType.Road, connections.ToArray());
+    }
+
+    private (int idx, SideType side)[] GetSidesOfConnectedRoad(ref Piece neighbour, in int start)
+    {
+        List<(int idx, SideType side)> sides = new();
+
+        for (int i = 0; i < neighbour.Entrances.Length; i++)
+        {
+            sides.Add((neighbour.Entrances[i], SideType.Road));
+        }
+
+        sides.Add((GetOpositeSide(start, neighbour.Types.Length), SideType.Road));
+
+        return sides.ToArray();
+    }
+
     private void CreatePieces()
     {
         for (int i = 0; i < size.x; i++)
@@ -134,13 +203,7 @@ public class LevelGenerator : MonoBehaviour
             {
                 ref var cur = ref pieces[i, j];
 
-                Vector3 curPos = GetOffset((i,j));
-                cur = cur with
-                {
-                    piece = Instantiate(PieceData.GetPiece(TileType.Solid).piece, position: curPos, rotation: Quaternion.identity, parent: transform)
-                };
-
-                PieceData.ChangeColor(cur, cur.Type);
+                SetPiece(ref cur, (i, j));
             }
         }
     }
@@ -178,7 +241,7 @@ public class LevelGenerator : MonoBehaviour
 
     private bool IsCellValid(in Vector2Int cord, int idx, out Vector2Int newPos, out Piece piece)
     {
-        piece = null;
+        piece = default;
         newPos = new Vector2Int
         {
             x = cord.x + ((((cord.y % 2 == 0 && directions[idx].x > 0) || (cord.y % 2 != 0 && directions[idx].x < 0))
@@ -208,7 +271,7 @@ public class LevelGenerator : MonoBehaviour
         };
     }
 
-    private int GetOpositeSide(int idx, int max)
+    private static int GetOpositeSide(int idx, int max)
     {
         idx += 3;
 
@@ -232,7 +295,7 @@ public class LevelGenerator : MonoBehaviour
 
     private SideType GetNextRandomType(SideType type, in Vector2Int pos, in int size, int times)
     {
-        Piece nextPiece = null;
+        Piece nextPiece = default;
         if (times <= 0) return SideType.None;
 
         SideType nextSideType = SideType.None;
@@ -277,7 +340,7 @@ public class LevelGenerator : MonoBehaviour
 
     private bool FindBestPieceInCircle(SideType type, Vector2Int pos, out Piece piece, out Vector2Int newPos, out int times, int deep = 1)
     {
-        piece = null;
+        piece = default;
         newPos = pos;
         times = 0;
         if (deep <= 0) return false;
@@ -292,6 +355,9 @@ public class LevelGenerator : MonoBehaviour
             
             foreach (var curPos in circleMove)
             {
+                if (curPos.x < 0 || curPos.x >= size.x ||
+                curPos.y < 0 || curPos.y >= size.y)
+                    continue;
                 
                 times = 0;
                 circleMove2 = new HexCircleMovement(size, curPos, 1);
@@ -300,6 +366,10 @@ public class LevelGenerator : MonoBehaviour
 
                 foreach (var neighbour in circleMove2)
                 {
+                    if (neighbour.x < 0 || neighbour.x >= size.x ||
+                    neighbour.y < 0 || neighbour.y >= size.y)
+                        continue;
+
                     if (pieces[neighbour.x, neighbour.y].Type == type)
                     {
                         times++;
@@ -354,7 +424,7 @@ public class LevelGenerator : MonoBehaviour
 
     private void SetTopping(ref Piece piece, Topping topp, uint rotation = 0)
     {
-        Vector3 curPos = new(piece.piece.transform.position.x, 0, piece.piece.transform.position.z);
+        Vector3 curPos = new(piece.Prefab.transform.position.x, 0, piece.Prefab.transform.position.z);
         Vector3 toppPosition = new(curPos.x, topp.Prefab.transform.position.y, curPos.z);
 
         topp.SetPrefab(Instantiate(topp.Prefab, toppPosition, topp.Prefab.transform.rotation, transform));
@@ -373,6 +443,42 @@ public class LevelGenerator : MonoBehaviour
 
         character.SetPiece(Instantiate(character.Prefab, toppPosition, character.Prefab.transform.rotation, transform));
         character.Rotate((int)rotation);
+    }
+
+    public void RepleacePiece(ref Piece piece, TileType type, params (int idx, SideType)[] sides)
+    {
+        if (piece.Topping.Prefab)
+            piece.Topping.Prefab.SetActive(false);
+
+        piece.Prefab.gameObject.SetActive(false);
+
+        Piece newPiece = type == TileType.Road ? PieceData.GetPiece(type, sides) : PieceData.GetPiece(type);
+
+        if (newPiece == null) return;
+
+        var pos = piece.Prefab.transform.position;
+        var rotation = piece.Prefab.transform.rotation;
+        var prevType = piece.Type;
+
+        piece = newPiece;
+        piece.Prefab = Instantiate(newPiece.Prefab, pos, rotation, transform);
+        piece.Rotate();
+
+        PieceData.ChangeColor(piece, prevType);
+    }
+
+    public void SetPiece(ref Piece piece, in (int x, int y) pos)
+    {
+        Vector3 curPos = GetOffset(pos);
+
+        SetPiece(ref piece, curPos);
+    }
+
+    public void SetPiece(ref Piece piece, Vector3 curPos)
+    {
+        piece.Prefab = Instantiate(PieceData.GetPiece(TileType.Solid).Prefab, position: curPos, rotation: Quaternion.identity, parent: transform);
+
+        PieceData.ChangeColor(piece, piece.Type);
     }
 }
 
@@ -435,8 +541,8 @@ public class HexCircleMovement : IEnumerable<Vector2Int>
                     y = _current.y + _directions[_idx].y
                 };
 
-                if (newPos.x >= 0 && newPos.x < _size.x &&
-                newPos.y >= 0 && newPos.y < _size.y)
+                //if (newPos.x >= 0 && newPos.x < _size.x &&
+                //newPos.y >= 0 && newPos.y < _size.y)
                     isValid = true;
 
                 _current = newPos;

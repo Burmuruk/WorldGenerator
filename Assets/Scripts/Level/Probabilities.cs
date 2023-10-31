@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
-public struct Probabilities<T> where T : Enum
+public struct Probabilities<T> : ICloneable where T : Enum
 {
     (T type, float prob)[] probs;
     (T type, float prob)[] _backUpProbs;
@@ -112,5 +111,14 @@ public struct Probabilities<T> where T : Enum
         }
 
         return probsRange;
+    }
+
+    public object Clone()
+    {
+        return new Probabilities<T>()
+        {
+            probs = ((T type, float prob)[]) probs.Clone(),
+            _backUpProbs = ((T type, float prob)[])_backUpProbs.Clone(),
+        };
     }
 }

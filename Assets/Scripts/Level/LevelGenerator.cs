@@ -62,19 +62,25 @@ public class LevelGenerator : MonoBehaviour
             ref var cur = ref pieces[randX, randY];
             if (cur.Type == SideType.Grass && cur.Topping.Prefab == null)
             {
-                //PieceData.ChangeType(cur, )
-                PieceData.ChangeColor(cur, SideType.Mudd);
-                SetTopping(ref cur, ToppingType.House, 2);
+                var nextPos = MovePosition(new(randX, randY), 2);
 
-                var newDir = MovePosition(new(randX, randY), 2);
-                var newPos = GetOffset(newDir);
-                SetCharacter(newPos, CharacterType.Knight, 2);
-                //SetTopping(ref cur, ToppingType.);
+                ref var nextPiece = ref pieces[nextPos.x, nextPos.y];
+                if (nextPiece.Type != SideType.Water && !nextPiece.Topping.Prefab)
+                {
+                    //PieceData.ChangeType(cur, )
+                    //PieceData.ChangeColor(cur, SideType.Mudd);
+                    SetTopping(ref cur, ToppingType.House, 2);
 
-                ref var newPiece = ref pieces[newDir.x, newDir.y];
-                RepleacePiece(ref newPiece, TileType.Road, (5, SideType.Road));
+                    var newDir = MovePosition(new(randX, randY), 2);
+                    var newPos = GetOffset(newDir);
+                    SetCharacter(newPos, CharacterType.Knight, 2);
+                    //SetTopping(ref cur, ToppingType.);
 
-                isValid = true;
+                    ref var newPiece = ref pieces[newDir.x, newDir.y];
+                    RepleacePiece(ref newPiece, TileType.Road, (5, SideType.Road));
+
+                    isValid = true;
+                }
             }
         }
     }
@@ -185,12 +191,22 @@ public class LevelGenerator : MonoBehaviour
     {
         List<(int idx, SideType side)> sides = new();
 
+        bool inside = false;
+        int oposite = GetOpositeSide(start, neighbour.Types.Length);
+
         for (int i = 0; i < neighbour.Entrances.Length; i++)
         {
+            if (!inside && neighbour.Entrances[i] > oposite)
+            {
+                inside = true;
+                sides.Add((oposite, SideType.Road));
+            }
+
             sides.Add((neighbour.Entrances[i], SideType.Road));
         }
 
-        sides.Add((GetOpositeSide(start, neighbour.Types.Length), SideType.Road));
+        if (!inside)
+            sides.Add((oposite, SideType.Road));
 
         return sides.ToArray();
     }
@@ -461,10 +477,10 @@ public class LevelGenerator : MonoBehaviour
         var prevType = piece.Type;
 
         piece = newPiece;
-        piece.Prefab = Instantiate(newPiece.Prefab, pos, rotation, transform);
+        piece.Prefab = Instantiate(newPiece.Prefab, pos, Quaternion.identity, transform);
         piece.Rotate();
 
-        PieceData.ChangeColor(piece, prevType);
+        PieceData.ChangeType(piece, prevType);
     }
 
     public void SetPiece(ref Piece piece, in (int x, int y) pos)
@@ -478,7 +494,7 @@ public class LevelGenerator : MonoBehaviour
     {
         piece.Prefab = Instantiate(PieceData.GetPiece(TileType.Solid).Prefab, position: curPos, rotation: Quaternion.identity, parent: transform);
 
-        PieceData.ChangeColor(piece, piece.Type);
+        PieceData.ChangeType(piece, piece.Type);
     }
 }
 

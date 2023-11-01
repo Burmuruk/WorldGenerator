@@ -5,6 +5,7 @@ using System;
 using WorldG.Patrol;
 using System.Linq;
 using Unity.VisualScripting;
+using Unity.VisualScripting.FullSerializer;
 
 public enum SideType
 {
@@ -353,14 +354,16 @@ public class PieceCollection : ScriptableObject
     {
         var piece = FindPieceByRoads(tileType, sides);
 
-        if (piece == null) return default;
+        if (piece == null) 
+            return default;
 
         var (go, ttype, sType, sTypes, mats, rot, comp) = piece;
         var copy = new Piece(go, ttype, sType, sTypes, mats, rot, comp);
         
         bool matched = RotateUntilMatch(ref copy, sides);
 
-        if (!matched) return default;
+        if (!matched) 
+            return default;
 
         return copy;
 
@@ -404,50 +407,45 @@ public class PieceCollection : ScriptableObject
         if (selectedRoads.Count == 1) return roads[selectedRoads[0]];
 
         List<uint> distances = new();
+        uint total = 0;
+        string disS1 = "";
         for (int i = 1; i < sides.Length; i++)
         {
-            if (sides[i].idx > sides[i - 1].idx)
-                distances.Add((uint)Mathf.Abs(sides[i].idx - sides[i - 1].idx));
-            else
-                distances.Add((uint)Mathf.Abs(sides[i - 1].idx - sides[i].idx));
+            var value = (uint)Mathf.Abs(sides[i].idx - sides[i - 1].idx);
+            disS1 += value.ToShortString();
+            distances.Add(value);
+            total += value;
         }
+        disS1 += ((uint)Mathf.Abs(roads[0].Types.Length - total)).ToString();
+        int count = disS1.Length;
+        for (int i = 0; i < count; i++)
+            disS1 += disS1[i];
+        
         int idx = 0;
         bool founded = false;
 
         for (idx = 0; idx < selectedRoads.Count; idx++)
         {
-            List<uint> disCopy = new();
+            List<uint> distances2 = new();
             var cur = roads[selectedRoads[idx]];
-
-            for (int j = 0; j < distances.Count; j++)
-                disCopy.Add(distances[j]);
+            uint total2 = 0;
+            string disS2 = "";
 
             for (int j = 1; j < cur.Entrances.Length; j++)
             {
                 uint value;
-
-                if (cur.Entrances[j] > cur.Entrances[j - 1])
-                    value = (uint)Mathf.Abs(cur.Entrances[j] - cur.Entrances[j - 1]);
-                else
-                    value = (uint)Mathf.Abs(cur.Entrances[j - 1] - cur.Entrances[j]);
-
                 founded = false;
-
-                for (int k = 0; k < disCopy.Count; k++)
-                {
-                    if (value == disCopy[k])
-                    {
-                        founded = true;
-                        disCopy.RemoveAt(k);
-                        break;
-                    }
-                }
-
-                if (!founded) break;
+                total2 += value = (uint)Mathf.Abs(cur.Entrances[j] - cur.Entrances[j - 1]);
+                disS2 += value.ToShortString();
             }
 
-            if (founded)
+            disS2 += ((uint)Mathf.Abs(roads[0].Types.Length - total2)).ToString();
+
+            if (disS1.Contains(disS2))
+            {
+                founded = true;
                 break;
+            }
         }
 
         return founded ? roads[selectedRoads[idx]] : default;

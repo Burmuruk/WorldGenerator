@@ -40,7 +40,8 @@ public enum CharacterType
     Knight,
     Hood,
     Skeleton,
-    Viking
+    Viking,
+    Citizen
 }
 
 [Serializable]

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Coco.AI.PathFinding;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,6 +15,7 @@ namespace WorldG.Patrol
         [SerializeField] bool shouldRepeat = false;
         [SerializeField] List<Task> tasks = new List<Task>();
         Movement mover;
+        IPathFinder finder;
 
         public enum TaskType
         {
@@ -101,6 +103,13 @@ namespace WorldG.Patrol
                 mover.OnFinished -= Execute_Tasks;
         }
 
+        public void SetTarget(Piece target, List<Piece> roads)
+        {
+
+        }
+
+        public void SetSpline(Spline spline) => this.spline = spline;
+
         private void Execute_Tasks()
         {
             if (currentAction < tasksList.Count && tasksList != null)
@@ -109,7 +118,7 @@ namespace WorldG.Patrol
                 //print(currentAction);
                 tasksList[currentAction++].Invoke();
             }
-            else if (shouldRepeat && currentAction >= tasksList.Count)
+            else if (shouldRepeat && tasksList != null && currentAction >= tasksList.Count)
             {
                 currentAction = 0;
                 Execute_Tasks();

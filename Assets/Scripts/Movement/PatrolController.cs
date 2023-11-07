@@ -38,7 +38,7 @@ namespace WorldG.Patrol
         Transform currentPoint = default;
         Transform nextPoint = default;
         object taskValue = default;
-        IEnumerator<PatrolPoint> enumerator = null;
+        IEnumerator<ISplineNode> enumerator = null;
 
         #endregion
 
@@ -52,7 +52,7 @@ namespace WorldG.Patrol
 
                 if (enumerator.MoveNext())
                 {
-                    return currentPoint = enumerator.Current.gameObject.transform;
+                    return currentPoint = enumerator.Current.Transform;
                 }
                 else
                     return default;

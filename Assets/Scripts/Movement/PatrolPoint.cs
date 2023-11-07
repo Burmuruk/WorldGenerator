@@ -3,22 +3,24 @@ using UnityEngine;
 
 namespace WorldG.Patrol
 {
+    public struct CopyData
+    {
+        public bool wasSelected;
+        public PatrolPoint point;
+
+        public CopyData(bool wasSelected)
+        {
+            this.wasSelected = wasSelected;
+            point = null;
+        }
+    }
+
     //[ExecuteInEditMode]
     public class PatrolPoint : MonoBehaviour
     {
         #region variables
         public NodeData nodeData = null;
-        public struct CopyData
-        {
-            public bool wasSelected;
-            public PatrolPoint point;
-
-            public CopyData(bool wasSelected)
-            {
-                this.wasSelected = wasSelected;
-                point = null;
-            }
-        }
+        
         [NonSerialized] public static CopyData copyData;
 
         public Action<PatrolPoint, PatrolPoint> OnNodeAdded;

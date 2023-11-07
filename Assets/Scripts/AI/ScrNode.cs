@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using WorldG.Patrol;
 
-namespace SotomaYorch.Agent.Dijkstra
+namespace Coco.AI
 {
     #region Enums
 

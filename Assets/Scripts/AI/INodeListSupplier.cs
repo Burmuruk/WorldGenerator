@@ -1,18 +1,17 @@
-﻿using SotomaYorch.Agent.Dijkstra;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Coco.AI.PathFinding
+namespace WorldG.Patrol
 {
     public interface INodeListSupplier
     {
         public Vector3 StartNode { get; }
         public Vector3 EndNode { get; }
-        public ScrNode[] Nodes { get; }
+        public IPathNode[] Nodes { get; }
 
-        public void SetTarget(Vector3 start, Vector3 end, Vector3[] nodes);
+        public void SetTarget(Vector3 start, Vector3 end, Vector3[] nodes, float pRadious = .2f);
 
-        public ScrNode FindNearestNode(Vector3 start);
+        public IPathNode FindNearestNode(Vector3 start);
 
         public void CalculateNodesConnections();
 

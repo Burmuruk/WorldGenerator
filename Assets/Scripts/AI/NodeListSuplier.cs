@@ -1,14 +1,13 @@
-﻿using SotomaYorch.Agent.Dijkstra;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Coco.AI.PathFinding
+
+namespace WorldG.Patrol
 {
-    public class NodeSuplier : INodeListSupplier
+    public class NodeListSuplier : INodeListSupplier
     {
         private Vector3 startNode = default;
         private Vector3 endNode = default;
-        ScrNode[] nodes = null;
+        IPathNode[] nodes = null;
         private float maxDistance = 2;
         private float maxAngle = 5;
         float pRadious = .5f;
@@ -19,7 +18,7 @@ namespace Coco.AI.PathFinding
 
         public Vector3 EndNode => endNode;
 
-        public ScrNode[] Nodes => nodes;
+        public IPathNode[] Nodes => nodes;
 
         public void CalculateNodesConnections()
         {
@@ -56,10 +55,10 @@ namespace Coco.AI.PathFinding
                         (ConnectionType a, ConnectionType b) types = Get_Types(hitted1, hitted2);
 
                         if (!hitted1)
-                            cur.nodeConnections.Add(
+                            cur.NodeConnections.Add(
                                 new NodeConnection(cur, nodes[j], m, types.a));
                         if (!hitted2)
-                            nodes[j].nodeConnections.Add(
+                            nodes[j].NodeConnections.Add(
                                 new NodeConnection(nodes[j], cur, m, types.b));
                     }
                 }
@@ -77,16 +76,16 @@ namespace Coco.AI.PathFinding
                     _ => (ConnectionType.None, ConnectionType.None),
                 };
             }
-            float Get_VerticalDifference(ScrNode node, ScrNode cur)
+            float Get_VerticalDifference(IPathNode node, IPathNode cur)
             {
                 float dif = 0;
 
-                if (node.transform.position.y > cur.transform.position.y)
+                if (node.Position.y > cur.Position.y)
                 {
-                    dif = node.transform.position.y - cur.transform.position.y;
+                    dif = node.Position.y - cur.Position.y;
                 }
                 else
-                    dif = cur.transform.position.y - node.transform.position.y;
+                    dif = cur.Position.y - node.Position.y;
 
                 return dif;
             }
@@ -104,12 +103,12 @@ namespace Coco.AI.PathFinding
             connectionsState = pState.deleting;
 
             foreach (var node in nodes)
-                node.Clear_Connections();
+                node.ClearConnections();
 
             connectionsState = pState.None;
         }
 
-        public ScrNode FindNearestNode(Vector3 start)
+        public IPathNode FindNearestNode(Vector3 start)
         {
             if (nodes == null || nodes.Length <= 0) return default;
 
@@ -118,7 +117,7 @@ namespace Coco.AI.PathFinding
 
             for (int i = 0; i < nodes.Length; i++)
             {
-                if (Vector3.Distance(nodes[i].transform.position, start) is var d && d < minDistance)
+                if (Vector3.Distance(nodes[i].Position, start) is var d && d < minDistance)
                 {
                     minDistance = d;
                     index = i;
@@ -132,25 +131,25 @@ namespace Coco.AI.PathFinding
         {
             this.startNode = start;
             this.endNode = end;
-            this.nodes = nodes;
+            //this.nodes = nodes;
             this.pRadious = pRadious;
         }
 
-        private float Get_Magnitud(ScrNode nodeA, ScrNode nodeB) =>
-            Vector3.Distance(nodeA.transform.position, nodeB.transform.position);
+        private float Get_Magnitud(IPathNode nodeA, IPathNode nodeB) =>
+            Vector3.Distance(nodeA.Position, nodeB.Position);
 
-        bool Detect_OjbstaclesBetween(ScrNode nodeA, ScrNode nodeB, out float groundNormal)
+        bool Detect_OjbstaclesBetween(IPathNode nodeA, IPathNode nodeB, out float groundNormal)
         {
             groundNormal = 0;
             RaycastHit[] hit;
-            var pointA = nodeA.transform.position + new Vector3(0, pRadious, 0);
-            var pointB = nodeA.transform.position + new Vector3(0, 2 * pRadious + 1, 0);
+            var pointA = nodeA.Position + new Vector3(0, pRadious, 0);
+            var pointB = nodeA.Position + new Vector3(0, 2 * pRadious + 1, 0);
 
-            var dir = (nodeB.transform.position - nodeA.transform.position);
+            var dir = (nodeB.Position - nodeA.Position);
 
-            hit = Physics.CapsuleCastAll(pointA, pointB, pRadious, dir.normalized, Vector3.Distance(nodeA.transform.position, nodeB.transform.position));
+            hit = Physics.CapsuleCastAll(pointA, pointB, pRadious, dir.normalized, Vector3.Distance(nodeA.Position, nodeB.Position));
             Debug.DrawLine(pointA, pointB);
-            Debug.DrawRay(pointA, dir.normalized * Vector3.Distance(nodeA.transform.position, nodeB.transform.position));
+            Debug.DrawRay(pointA, dir.normalized * Vector3.Distance(nodeA.Position, nodeB.Position));
 
             bool hitted = false;
             for (int k = 0; k < hit.Length; k++)

@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.ConstrainedExecution;
+using Unity.VisualScripting;
+using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.XR;
 using WorldG.Control;
 
 namespace WorldG.level
@@ -22,25 +27,137 @@ namespace WorldG.level
             List<Minion> minions;
         }
 
-        private void Awake()
+        public void GetPiece(ref Piece piece, TileType tileType, int idVersion = -1)
         {
+            if (_piecesPool.ContainsKey(piece.TileType))
+            {
+                var cur = _piecesPool[tileType].First;
+                for (int i = 0; i < _piecesPool[tileType].Count; i++)
+                {
+                    if (!cur.Value.Prefab.activeSelf)
+                    {
+                        if (idVersion >= 0 ? cur.Value.Version == idVersion : true)
+                        {
+                            RealivePiece(cur.Value);
+                            piece.Prefab = cur.Value.Prefab;
+                            return;
+                        }
+                    }
+                    else break;
 
+                    cur = cur.Next;
+                }
+
+            }
+
+            var newPiece = pieceCollection.GetPiece(tileType);
+            piece.Prefab = Instantiate(newPiece.Prefab, newPiece.Prefab.transform.position, Quaternion.identity, transform);
+
+            newPiece.Prefab = piece.Prefab;
+
+            AddPieceToPool(newPiece);
         }
 
-        public void AddPiece(ref Piece piece)
+        public Piece GetPiece(TileType tileType, (int idx, SideType sideType)[] sides)
         {
-            if (piece.Topping.Prefab)
-                AddTopping(ref piece);
+            List<Piece> pieces = null;
+            Piece curPiece = null;
 
+            if (_piecesPool.ContainsKey(tileType))
+            {
+                pieces = new();
+                foreach (var cur in _piecesPool[tileType])
+                {
+                    if (!cur.Prefab.activeSelf)
+                        pieces.Add(cur);
+                    else
+                        break;
+                }
+
+                curPiece = PieceCollection.FindPieceByRoads(pieces.ToArray(), sides);
+                if (curPiece != null)
+                    curPiece.Rotation = 0;
+                if (curPiece != null && !PieceCollection.RotateUntilMatch(ref curPiece, in sides))
+                    print("Error al rotar");
+            }
+
+            if (curPiece != null)
+            {
+                RealivePiece(curPiece);
+                return curPiece;
+            }
+
+            curPiece = pieceCollection.GetPiece(tileType, sides);
+            if (curPiece == null) return null;
+
+            curPiece.Prefab = Instantiate(curPiece.Prefab, curPiece.Prefab.transform.position, Quaternion.identity, transform);
+
+            var (go, ttype, sType, sTypes, mats, rot, comp, vID) = curPiece;
+            var copy = new Piece(go, ttype, sType, sTypes, mats, rot, comp, vID);
+
+            AddPieceToPool(curPiece);
+
+            return copy;
+        }
+
+        //public Piece GetPiece(Piece piece)
+        //{
+        //    var sides = new (int idx, SideType type)[piece.Entrances.Length];
+
+        //    for (int i = 0; i < piece.Entrances.Length; i++)
+        //    {
+        //        sides[i] = (piece.Entrances[i], piece[piece.Entrances[i]]);
+        //    }
+
+        //    var curPiece = PieceCollection.FindPieceByRoads(_piecesPool[piece.TileType].ToArray(), sides);
+
+        //    if (curPiece != null) return curPiece;
+            
+            
+            
+        //    return null;
+        //}
+
+        public void KillPiece(ref Piece piece, TileType tileType)
+        {
+            var cur = _piecesPool[tileType].First;
+
+            for (int i = 0; i < _piecesPool[tileType].Count; i++)
+            {
+                if (cur.Value.Prefab.GetInstanceID() == piece.Prefab.GetInstanceID())
+                {
+                    break;
+                }
+
+                cur = cur.Next;
+            }
+
+            _piecesPool[tileType].Remove(cur);
+            _piecesPool[tileType].AddFirst(cur);
+
+            cur.Value.Prefab.SetActive(false);
+            piece.Rotation = 0;
+            piece.Rotate();
+            cur.Value.Prefab.transform.rotation = Quaternion.Euler(Vector3.zero);
+        }
+
+        private void RealivePiece(Piece piece)
+        {
+            _piecesPool[piece.TileType].Remove(piece);
+            _piecesPool[piece.TileType].AddLast(piece);
+            piece.Prefab.SetActive(true);
+        }
+
+        private void AddPieceToPool(Piece piece)
+        {
             if (!_piecesPool.ContainsKey(piece.TileType))
             {
                 _piecesPool.Add(piece.TileType, new());
             }
 
             _piecesPool[piece.TileType].AddLast(piece);
-            piece.Prefab.gameObject.SetActive(false);
-
-            //piece.Prefab.gameObject.GetComponent<IKillable>().OnDie += SetPieceAvailable;
+            piece.Prefab.gameObject.SetActive(true);
+            piece.Rotation = 0;
         }
 
         private void SetPieceAvailable()
@@ -48,26 +165,75 @@ namespace WorldG.level
             throw new NotImplementedException();
         }
 
-        public void AddTopping(ref Piece piece)
+        public void GetTopping(ref Piece piece, ref Topping topp, int version = -1)
         {
-            if (!piece.Topping.Prefab) return;
+            if (_toppingsPool.ContainsKey(topp.Type))
+            {
+                var cur = _toppingsPool[topp.Type].First;
+                for (int i = 0; i < _toppingsPool[topp.Type].Count; i++)
+                {
+                    if (!cur.Value.Prefab.activeSelf)
+                    {
+                        if (version >= 0 ? cur.Value.Version == topp.Version : true)
+                        {
+                            piece.SetTopping(cur.Value);
+                            SetToppingAvailable(ref piece);
 
-            if (!_toppingsPool.ContainsKey(piece.ToppingType))
-                _toppingsPool.Add(piece.ToppingType, new());
+                            if (piece.Topping.Prefab)
+                                SetToppingAvailable(ref piece, false);
+                            return;
+                        }
+                    }
+                    else break;
 
-            _toppingsPool[piece.ToppingType].AddLast(piece.Topping);
-            piece.Topping.Prefab.SetActive(false);
-            piece.SetTopping(default);
+                    cur = cur.Next;
+                }
+            }
 
-            //piece.Prefab.gameObject.GetComponent<IKillable>().OnDie += SetToppingAvailable;
+            if (piece.Topping.Prefab)
+                SetToppingAvailable(ref piece, false);
+
+            if (!_toppingsPool.ContainsKey(topp.Type))
+                _toppingsPool.Add(topp.Type, new());
+
+            var topping = pieceCollection.GetTopping(topp.Type);
+            topping.SetPrefab(Instantiate(topping.Prefab, topping.Prefab.transform.position, topping.Prefab.transform.rotation, transform));
+
+            var (type, prefab, sides, versionID, haveSpline) = topping;
+            var copy = new Topping(type, prefab, sides, versionID, haveSpline);
+
+            piece.SetTopping(topping);
+            piece.Topping.Prefab.SetActive(true);
+            _toppingsPool[piece.ToppingType].AddLast(copy);
         }
 
-        private void SetToppingAvailable()
+        private void SetToppingAvailable(ref Piece piece, bool value = true)
         {
+            var cur = _toppingsPool[piece.Topping.Type].First;
+            for (int i = 0; i < _toppingsPool[piece.Topping.Type].Count; i++)
+            {
+                if (!cur.Value.Prefab.activeSelf)
+                {
+                    if (cur.Value.Prefab.GetInstanceID() == piece.Topping.Prefab.GetInstanceID())
+                    {
+                        piece.Topping.Prefab.SetActive(value);
+                        _toppingsPool[piece.Topping.Type].Remove(cur);
 
+                        if (value)
+                            _toppingsPool[piece.Topping.Type].AddLast(cur);
+                        else
+                            _toppingsPool[piece.Topping.Type].AddFirst(cur);
+
+                        break;
+                    }
+                }
+                else break;
+
+                cur = cur.Next;
+            }
         }
 
-        public Character AddCharacter(CharacterType type)
+        public Character GetCharacter(CharacterType type)
         {
             var character = pieceCollection.GetCharacter(type);
             GameObject characterIns = null;
@@ -96,7 +262,6 @@ namespace WorldG.level
                 }
             }
 
-
             if (characterIns == null)
             {
                 characterIns = Instantiate(character.Prefab, character.Prefab.transform.position, character.Prefab.transform.rotation, transform);
@@ -111,6 +276,11 @@ namespace WorldG.level
         public List<Minion> GetMinionsById(int id)
         {
             return null;
+        }
+
+        public LinkedList<Piece> GetRoads()
+        {
+            return _piecesPool[TileType.Road];
         }
     } 
 }

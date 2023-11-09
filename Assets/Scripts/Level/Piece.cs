@@ -35,6 +35,7 @@ public record Piece
     [SerializeField] private int[] materialIdx;
     [SerializeField] private bool completePiece;
     [SerializeField] private int rotation;
+    private int versionID = -1;
 
     private TileType _tileType;
     private int[] _entrances;
@@ -69,19 +70,19 @@ public record Piece
         get => rotation;
         set
         {
-            var last = types[0];
-            int curIdx = 0;
-            for (int i = 1; i < types.Length; i++)
-            {
-                curIdx += value - rotation;
-                if (curIdx >= types.Length) curIdx -= types.Length;
+            if (value == rotation) return;
 
-                var cur = types[curIdx];
-                types[curIdx] = last;
-                last = cur;
+            SideType[] sorted = new SideType[types.Length];
+
+            for (int i = rotation - value, j = 0; j < types.Length; ++i, ++j) 
+            {
+                if (i >= types.Length) i = 0;
+                else if (i < 0) i = types.Length - 1;
+
+                sorted[j] = types[i];
             }
 
-            types[0] = last;
+            types = sorted;
             rotation = value;
 
             CalculateEntrances();
@@ -89,6 +90,7 @@ public record Piece
     }
     public Topping Topping { get => _topping; }
     public TileType TileType { get => _tileType; set => _tileType = value; }
+    public int Version { get => versionID; }
 
     public int[] Entrances
     {
@@ -103,12 +105,12 @@ public record Piece
         }
     }
 
-    public Piece(int rotation, TileType tileType, bool completePiece = true)
+    public Piece(int rotation, TileType tileType, int versionID, bool completePiece = true)
     {
         piece = null;
         types = new SideType[6];
+        Rotation = rotation;
         this.completePiece = completePiece;
-        this.rotation = rotation;
         materialIdx = null;
         this.type = SideType.Grass;
         _topping = default;
@@ -117,17 +119,18 @@ public record Piece
         _tileType = tileType;
     }
 
-    public Piece(GameObject piece, TileType tileType, SideType sideType, SideType[] types, int[] materials, int rotation, bool completePiece) :
-        this(rotation, tileType, completePiece)
+    public Piece(GameObject piece, TileType tileType, SideType sideType, SideType[] types, int[] materials, int rotation, bool completePiece, int id) :
+        this(rotation, tileType, id, completePiece)
     {
         this.piece = piece;
         this.types = (SideType[])types.Clone();
         type = sideType;
         this.materialIdx = (int[])materials.Clone();
+        versionID = id;
     }
 
     public void Deconstruct(out GameObject go, out TileType tileType, out SideType sideType, out SideType[] sideTypes, out int[] materials,
-        out int rotation, out bool complete)
+        out int rotation, out bool complete, out int id)
     {
         go = piece;
         tileType = _tileType;
@@ -136,6 +139,7 @@ public record Piece
         materials = materialIdx;
         rotation = this.rotation;
         complete = this.completePiece;
+        id = versionID;
     }
 
     //public void Deconstruct(out GameObject go)
@@ -159,6 +163,11 @@ public record Piece
         piece.transform.Rotate(new(0, rotation * 60, 0));
     }
 
+    public void ResetRotation()
+    {
+        piece.transform.Rotate(new(0, rotation * 60, 0));
+    }
+
     public void RemoveTopping()
     {
         _topping = default;
@@ -178,6 +187,8 @@ public record Piece
     {
         return HashCode.Combine(piece, types);
     }
+
+    public void SetVersion(int version) => versionID = version;
 
     //public static bool operator ==(Piece piece1, Piece piece2)
     //{

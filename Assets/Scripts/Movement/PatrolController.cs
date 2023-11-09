@@ -11,6 +11,8 @@ namespace WorldG.Patrol
         #region Variables
         [SerializeField] Spline spline;
         [SerializeField] CyclicType cyclicType = CyclicType.None;
+        [SerializeField] PathFinder<AStar> pathFinder;
+        INodeListSupplier nodeList;
         [Space(20)]
         [SerializeField] bool shouldRepeat = false;
         [SerializeField] List<Task> tasks = new List<Task>();
@@ -24,6 +26,7 @@ namespace WorldG.Patrol
             Move,
             Wait
         }
+
         [Serializable]
         public struct Task
         {
@@ -48,7 +51,7 @@ namespace WorldG.Patrol
             get
             {
                 if (enumerator == null)
-                    enumerator = spline.path.GetEnumerator();
+                    enumerator = (IEnumerator<ISplineNode>)spline.path.GetEnumerator();
 
                 if (enumerator.MoveNext())
                 {
@@ -58,6 +61,11 @@ namespace WorldG.Patrol
                     return default;
             }
         } 
+
+        public void Initialize()
+        {
+
+        }
         #endregion
 
         #region private methods
@@ -81,6 +89,8 @@ namespace WorldG.Patrol
                 spline.cyclicType = cyclicType;
                 spline.Initialize();
             }
+            else
+                return;
 
             foreach (var task in tasks)
             {
@@ -103,9 +113,14 @@ namespace WorldG.Patrol
                 mover.OnFinished -= Execute_Tasks;
         }
 
-        public void SetTarget(Piece target, List<Piece> roads)
+        public void CreatePatrolWithSpline<T>(Vector3 start, Vector3 end, CyclicType cyclicType, INodeListSupplier nodeList) where T : IPathNode, ISplineNode
         {
+            //this.spline = Instantiate(spline, transform).GetComponent<Spline>();
+            //this.spline.cyclicType = cyclicType;
+            //this.spline.Initialize(nodes);
 
+            //pathFinder = new PathFinder<AStar>(nodeList);
+            //pathFinder.Find_BestRoute((start, end));
         }
 
         public void SetSpline(Spline spline) => this.spline = spline;

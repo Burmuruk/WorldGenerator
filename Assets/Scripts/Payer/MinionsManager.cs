@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Coco.AI;
+using System.Collections.Generic;
 using UnityEngine;
 using WorldG.Architecture;
 using WorldG.Control;
+using WorldG.Patrol;
 
 namespace WorldG.level
 {
@@ -10,6 +12,8 @@ namespace WorldG.level
         Dictionary<CharacterType, LinkedList<FarmingRecord>> minions;
         List<Minion> selected = new();
 
+        NodeListSuplier roadsConnections;
+        List<IPathNode> roads = null;
         PoolManager pool;
 
         public struct FarmingRecord
@@ -53,7 +57,7 @@ namespace WorldG.level
         {
             if (selected.Count < 0) return;
             object hi = 2;
-
+            GetRoadsConnections();
             switch (selectable)
             {
                 case Resource r:
@@ -74,6 +78,30 @@ namespace WorldG.level
                     selected.ForEach((m) => m.SetTask(m.Move, args));
                     break;
             }
+        }
+
+        private void GetRoadsConnections()
+        {
+            print("Road");
+            if (roads != null && roads.Count > 0) return ;
+
+            roadsConnections = new();
+            var pieces = pool.GetRoads();
+            roads = new List<IPathNode>();
+
+            int i = 0;
+            foreach (var node in pieces)
+            {
+                var newPoint = new GameObject("Road" + i, typeof(MyNode));
+                newPoint.transform.position = node.Prefab.transform.position + Vector3.up * 2;
+                var newNode = newPoint.GetComponent<MyNode>();
+                newPoint.transform.parent = transform;
+
+                roads.Add(newNode);
+                i++;
+            }
+
+            roadsConnections.SetTarget(roads.ToArray(), maxAngle: 20);
         }
 
         private void Initialize()

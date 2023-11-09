@@ -12,6 +12,8 @@ namespace WorldG.Control
         public override void SetWork(object args)
         {
             int id = (int)args;
+
+            //_patrolController.SetTarget
         }
     }
 }

@@ -1,11 +1,7 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 using WorldG.Patrol;
-using System.Linq;
-using Unity.VisualScripting;
-using Unity.VisualScripting.FullSerializer;
 
 public enum SideType
 {
@@ -88,9 +84,11 @@ public struct Topping
     [SerializeField] bool _haveSpline;
     [SerializeField] ToppingSide[] _sides;
     PatrolController _patrol;
+    private int versionID;
 
     public GameObject Prefab { get => _piece; }
     public ToppingType Type { get { return _type; } }
+    public int Version { get => versionID; }
     public PatrolController Patrol 
     { 
         get 
@@ -105,12 +103,13 @@ public struct Topping
         } 
     }
 
-    public Topping(ToppingType type, GameObject piece, ToppingSide[] sides, bool haveSpline = false)
+    public Topping(ToppingType type, GameObject piece, ToppingSide[] sides, int versionID, bool haveSpline = false)
     {
         _type = type;
         _piece = piece;
-        _sides = sides;
+        _sides = (ToppingSide[])sides.Clone();
         _haveSpline = haveSpline;
+        this.versionID = versionID;
 
         if (haveSpline)
             _patrol = new PatrolController();
@@ -118,10 +117,35 @@ public struct Topping
             _patrol = null;
     }
 
+    public void Deconstruct(out ToppingType type, out GameObject piece, out ToppingSide[] sides, out int versionID, out bool haveSpline)
+    {
+        type = this.Type;
+        piece = this._piece;
+        sides = this._sides;
+        versionID = this.versionID;
+        haveSpline = this._haveSpline;
+    }
+
     public void SetPrefab(GameObject prefab) => _piece = prefab;
 
     public void Rotate(int rotation) =>
         _piece.transform.Rotate(new(0, rotation * 60, 0));
+
+    public void CopyTo(ref Topping topping)
+    {
+        var (type, piece, sides, versionID, haveSpline) = topping;
+
+        _type = type;
+        _piece = piece;
+        _sides = (ToppingSide[])sides.Clone();
+        _haveSpline = haveSpline;
+        this.versionID = versionID;
+
+        if (haveSpline)
+            _patrol = new PatrolController();
+        else
+            _patrol = null;
+    }
 }
 
 [Serializable]
@@ -214,6 +238,7 @@ public class PieceCollection : ScriptableObject
         {
             SideType lastType = pieces[i][0];
             bool isSolid = true;
+            pieces[i].SetVersion(i);
             pieces[i].ResetEntrances();
 
             foreach (var sideType in pieces[i].Types)
@@ -282,10 +307,11 @@ public class PieceCollection : ScriptableObject
             if (!_toppings.ContainsKey(group.type))
                 _toppings.Add(group.type, new());
 
+            int versionID = 0;
             foreach (var topp in group.pieces)
                 foreach (var piece in group.pieces)
                 {
-                    _toppings[group.type].Add(new Topping(group.type, piece, group.sides, group.haveSpline));
+                    _toppings[group.type].Add(new Topping(group.type, piece, group.sides, versionID++, group.haveSpline));
                 }
         }
 
@@ -339,7 +365,10 @@ public class PieceCollection : ScriptableObject
 
         var rand = UnityEngine.Random.Range(0, _pieces[tileType].Count);
 
-        return _pieces[tileType][rand];
+        var (go, ttype, sType, sTypes, mats, rot, comp, vID) = _pieces[tileType][rand];
+        var copy = new Piece(go, ttype, sType, sTypes, mats, rot, comp, vID);
+
+        return copy;
     }
 
     public Piece GetRandomPiece(TileType tileType)
@@ -348,18 +377,21 @@ public class PieceCollection : ScriptableObject
 
         var rand = UnityEngine.Random.Range(0, _pieces[tileType].Count);
 
-        return _pieces[tileType][rand];
+        var (go, ttype, sType, sTypes, mats, rot, comp, vID) = _pieces[tileType][rand];
+        var copy = new Piece(go, ttype, sType, sTypes, mats, rot, comp, vID);
+
+        return copy;
     }
 
     public Piece GetPiece(TileType tileType, params (int idx, SideType sideType)[] sides)
     {
-        var piece = FindPieceByRoads(tileType, sides);
+        var piece = FindPieceByRoads(_pieces[tileType].ToArray(), sides);
 
         if (piece == null) 
             return default;
 
-        var (go, ttype, sType, sTypes, mats, rot, comp) = piece;
-        var copy = new Piece(go, ttype, sType, sTypes, mats, rot, comp);
+        var (go, ttype, sType, sTypes, mats, rot, comp, vID) = piece;
+        var copy = new Piece(go, ttype, sType, sTypes, mats, rot, comp, vID);
         
         bool matched = RotateUntilMatch(ref copy, sides);
 
@@ -368,44 +400,43 @@ public class PieceCollection : ScriptableObject
 
         return copy;
 
-        bool RotateUntilMatch(ref Piece copy, in (int idx, SideType sideType)[] sides)
-        {
-            bool finished = false;
-
-            for (int i = 0; i < copy.Types.Length; i++)
-            {
-                for (int j = 0; j < sides.Length; j++)
-                {
-                    finished = true;
-                    if (sides[j].sideType != copy[sides[j].idx])
-                    {
-                        finished = false;
-                        break;
-                    }
-                }
-
-                if (finished)
-                    break;
-                else
-                    copy.Rotation += 1;
-            }
-
-            return finished;
-        }
     }
 
-    private Piece FindPieceByRoads(TileType tileType, params (int idx, SideType sideType)[] sides)
+    public static bool RotateUntilMatch(ref Piece copy, in (int idx, SideType sideType)[] sides)
     {
-        var roads = _pieces[tileType];
+        bool finished = false;
+
+        for (int i = 0; i < copy.Types.Length; i++)
+        {
+            for (int j = 0; j < sides.Length; j++)
+            {
+                finished = true;
+                if (sides[j].sideType != copy[sides[j].idx])
+                {
+                    finished = false;
+                    break;
+                }
+            }
+
+            if (finished)
+                break;
+            else
+                copy.Rotation += 1;
+        }
+
+        return finished;
+    }
+
+    public static Piece FindPieceByRoads(Piece[] pieces, params (int idx, SideType sideType)[] sides)
+    {
+        var roads = pieces;
         List<int> selectedRoads = new();
 
-        for (int i = 0; i < roads.Count; i++)
+        for (int i = 0; i < roads.Length; i++)
             if (roads[i].Entrances != null && roads[i].Entrances.Length == sides.Length)
                 selectedRoads.Add(i);
 
         if (selectedRoads.Count <= 0) return default;
-
-        if (selectedRoads.Count == 1) return roads[selectedRoads[0]];
 
         List<uint> distances = new();
         uint total = 0;
@@ -413,7 +444,7 @@ public class PieceCollection : ScriptableObject
         for (int i = 1; i < sides.Length; i++)
         {
             var value = (uint)Mathf.Abs(sides[i].idx - sides[i - 1].idx);
-            disS1 += value.ToShortString();
+            disS1 += value.ToString();
             distances.Add(value);
             total += value;
         }
@@ -437,7 +468,7 @@ public class PieceCollection : ScriptableObject
                 uint value;
                 founded = false;
                 total2 += value = (uint)Mathf.Abs(cur.Entrances[j] - cur.Entrances[j - 1]);
-                disS2 += value.ToShortString();
+                disS2 += value.ToString();
             }
 
             disS2 += ((uint)Mathf.Abs(roads[0].Types.Length - total2)).ToString();

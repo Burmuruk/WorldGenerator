@@ -125,7 +125,7 @@ MonoBehaviour:
   pieces:
   - piece: {fileID: 439441880705897246, guid: 9c252e06b471e7549a1c50bc11f4832a, type: 3}
     type: 1
-    types: 060000000600000006000000060000000600000006000000
+    types: 010000000100000001000000010000000100000001000000
     materialIdx: 00000000
     completePiece: 1
     rotation: 0
@@ -268,8 +268,8 @@ MonoBehaviour:
       probability: 0.4
   areas:
   - type: 5
-    minSize: 20
-    maxSize: 30
+    minSize: 2
+    maxSize: 3
     randomDirection: 0.77
     deepSearch: 2
     toppingTypes: []
@@ -280,8 +280,8 @@ MonoBehaviour:
     deepSearch: 2
     toppingTypes: []
   - type: 6
-    minSize: 25
-    maxSize: 32
+    minSize: 2
+    maxSize: 4
     randomDirection: 0.818
     deepSearch: 2
     toppingTypes:

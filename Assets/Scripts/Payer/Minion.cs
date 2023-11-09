@@ -11,6 +11,7 @@ namespace WorldG.Control
         [SerializeField] Spline spline;
         protected PatrolController _patrolController;
         Action onDeselection;
+        protected Movement movement;
 
         public bool IsSelected => _isSelected;
         public bool IsWorking => _isWorking;
@@ -19,6 +20,7 @@ namespace WorldG.Control
         private void Awake()
         {
             _patrolController = gameObject.AddComponent<PatrolController>();
+            movement = GetComponent<Movement>();
         }
 
         private void Update()
@@ -53,7 +55,9 @@ namespace WorldG.Control
             Vector3 target = (Vector3)destiny;
             Debug.DrawRay(target, target + Vector3.up * 10);
 
+            
 
+            //_patrolController.SetTarget()
         }
     }
 

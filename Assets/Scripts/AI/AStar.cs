@@ -1,26 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.ConstrainedExecution;
 using UnityEngine;
+using WorldG.Patrol;
 
 namespace Coco.AI.PathFinding
 {
     public class AStar : IPathFinder
     {
         #region Variables
-        ScrNode start;
-        ScrNode end;
+        IPathNode start;
+        IPathNode end;
         bool pathCalculated = false;
         bool endReached = false;
 
-        public LinkedList<ScrNode> shortestPath;
+        public LinkedList<IPathNode> shortestPath;
         private Dictionary<uint, Vector3> weights;
 
         #endregion
 
         #region Properties
         public bool Calculated { get => pathCalculated; }
-        public LinkedList<ScrNode> ShortestPath
+        public LinkedList<IPathNode> ShortestPath
         {
             get
             {
@@ -34,15 +34,15 @@ namespace Coco.AI.PathFinding
 
         public AStar() { }
 
-        public void SetNodeList(List<ScrNode> nodes)
+        public void SetNodeList(IPathNode[] nodes)
         {
             weights = new Dictionary<uint, Vector3>();
 
             try
             {
-                for (int i = 0; i < nodes.Count; i++)
+                for (int i = 0; i < nodes.Length; i++)
                 {
-                    weights.Add(nodes[i].idx, nodes[i].transform.position);
+                    weights.Add(nodes[i].ID, nodes[i].Position);
                 }
             }
             catch (Exception)
@@ -54,7 +54,7 @@ namespace Coco.AI.PathFinding
 
         public void ClearWeights() => weights = null;
 
-        public LinkedList<ScrNode> Get_Route(ScrNode start, ScrNode end, out float distance)
+        public LinkedList<IPathNode> Get_Route(IPathNode start, IPathNode end, out float distance)
         {
             distance = 0.0f;
             RequiredLists lists = new RequiredLists();
@@ -73,7 +73,7 @@ namespace Coco.AI.PathFinding
             return lists.shortestPath;
         }
 
-        public LinkedList<ScrNode> Find_Route(ScrNode start, ScrNode end, out float distance)
+        public LinkedList<IPathNode> Find_Route(IPathNode start, IPathNode end, out float distance)
         {
             distance = 0;
             RequiredLists lists = new RequiredLists();
@@ -106,7 +106,7 @@ namespace Coco.AI.PathFinding
             try
             {
                 Get_ShortestPath(ref lists, out distance);
-                Debug.Log($"Shortest {lists.shortestPath.First.Value.idx} to {lists.shortestPath.Last.Value.idx}");
+                Debug.Log($"Shortest {lists.shortestPath.First.Value.ID} to {lists.shortestPath.Last.Value.ID}");
             }
             catch (Exception)
             {
@@ -137,7 +137,7 @@ namespace Coco.AI.PathFinding
                 ref var data = ref lists.data;
 
                 data.Add(lists.start, new NodeData(null));
-                ScrNode cur = lists.start;
+                IPathNode cur = lists.start;
                 bool finished = false;
                 lists.endReached = false;
                 uint selectedNodesCount = 0;
@@ -146,19 +146,19 @@ namespace Coco.AI.PathFinding
                 {
                     try
                     {
-                        (ScrNode node, float weight) minWeight = (null, float.MaxValue);
+                        (IPathNode node, float weight) minWeight = (null, float.MaxValue);
 
                         var curData = data[cur];
                         ChangeState(NodeState.Checked, cur, ref data);
 
-                        if (cur.idx == lists.end.idx)
+                        if (cur.ID == lists.end.ID)
                         {
                             lists.endReached = true;
                             break;
                             //Update_CurrentNode(ref cur, unCheckedNodes.Last.Value, ref curWeight, ref lists);
                         }
 
-                        foreach (var conection in cur.nodeConnections)
+                        foreach (var conection in cur.NodeConnections)
                         {
                             try
                             {
@@ -179,7 +179,7 @@ namespace Coco.AI.PathFinding
                                     ChangeState(NodeState.Waiting, next, ref data);
                                 }
 
-                                float weight =  GetDistance(next.idx, lists.end.idx);
+                                float weight =  GetDistance(next.ID, lists.end.ID);
 
                                 if (weight < minWeight.weight)
                                     minWeight = (next, weight);
@@ -235,7 +235,7 @@ namespace Coco.AI.PathFinding
             shortestPath = null;
         }
 
-        private void ChangeState(NodeState state, ScrNode cur, ref Dictionary<ScrNode, NodeData> data)
+        private void ChangeState(NodeState state, IPathNode cur, ref Dictionary<IPathNode, NodeData> data)
         {
             var node = data[cur];
             node.Set_State(state);
@@ -243,7 +243,7 @@ namespace Coco.AI.PathFinding
             data[cur] = node;
         }
 
-        private void ChangeWeight(float weight, ScrNode node, ScrNode prev, ref Dictionary<ScrNode, NodeData> data)
+        private void ChangeWeight(float weight, IPathNode node, IPathNode prev, ref Dictionary<IPathNode, NodeData> data)
         {
             var nodeData = data [node];
             nodeData.Update_Weight(weight, prev);
@@ -251,7 +251,7 @@ namespace Coco.AI.PathFinding
             data[node] = nodeData;
         }
 
-        void Update_Previous(ref ScrNode cur, in ScrNode prev, ref Dictionary<ScrNode, NodeData> data)
+        void Update_Previous(ref IPathNode cur, in IPathNode prev, ref Dictionary<IPathNode, NodeData> data)
         {
             var hi = data[cur];
             hi.prev = prev;
@@ -270,17 +270,17 @@ namespace Coco.AI.PathFinding
             ref var start = ref lists.start;
 
             distance = data[end].weight;
-            shortestPath = new LinkedList<ScrNode>();
-            ScrNode cur = end;
+            shortestPath = new LinkedList<IPathNode>();
+            IPathNode cur = end;
 
-            while (data[cur].prev.idx != start.idx)
+            while (data[cur].prev.ID != start.ID)
             {
                 shortestPath.AddFirst(cur);
 
-                ScrNode next = data[cur].prev;
+                IPathNode next = data[cur].prev;
                 if (data[next].prev == null)
                 {
-                    Debug.LogError($"isNull from {cur.idx} to {next.idx}");
+                    Debug.LogError($"isNull from {cur.ID} to {next.ID}");
                     shortestPath = null;
                     return;
                 }
@@ -291,7 +291,7 @@ namespace Coco.AI.PathFinding
             shortestPath.AddFirst(data[cur].prev);
         }
 
-        private void Start(ScrNode node, ref RequiredLists lists)
+        private void Start(IPathNode node, ref RequiredLists lists)
         {
             lists.data.Add(node, new NodeData(NodeState.Unchecked));
         }

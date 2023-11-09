@@ -32,9 +32,9 @@ namespace WorldG.Patrol
 
         private void OnEnable()
         {
-            if (!isDisable) return;
+            //if (!isDisable) return;
             
-            Initialize();
+            //Initialize();
         }
 
         private void OnDisable()
@@ -91,6 +91,11 @@ namespace WorldG.Patrol
             }
 
             Get_StartPoints();
+        }
+
+        public void Initialize(List<ISplineNode> points)
+        {
+
         }
         #endregion
 

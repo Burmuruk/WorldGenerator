@@ -445,9 +445,9 @@ namespace WorldG.level
             Vector3 curPos = new(piece.Prefab.transform.position.x, 0, piece.Prefab.transform.position.z);
             Vector3 toppPosition = new(curPos.x, topp.Prefab.transform.position.y, curPos.z);
 
-            topp.SetPrefab(Instantiate(topp.Prefab, toppPosition, topp.Prefab.transform.rotation, transform));
+            _pool.GetTopping(ref piece, ref topp);
+            piece.Topping.Prefab.transform.position = toppPosition;
             topp.Rotate((int)rotation);
-            piece.SetTopping(topp);
         }
 
         public Character SetCharacter(Vector3 pos, CharacterType type, uint rotation = 0)
@@ -455,7 +455,7 @@ namespace WorldG.level
             //var character = PieceData.GetCharacter(type);
             //SetCharacter(pos, ref character, rotation);
 
-            var character = _pool.AddCharacter(type);
+            var character = _pool.GetCharacter(type);
             Vector3 toppPosition = new(pos.x, character.Prefab.transform.position.y, pos.z);
 
             character.Prefab.transform.position = toppPosition;
@@ -474,21 +474,20 @@ namespace WorldG.level
 
         public void RepleacePiece(ref Piece piece, TileType type, params (int idx, SideType)[] sides)
         {
-            _pool.AddPiece(ref piece);
+            Piece newPiece = _pool.GetPiece(type, sides);
 
-            Piece newPiece = type == TileType.Road ? PieceData.GetPiece(type, sides) : PieceData.GetPiece(type);
+            //Piece newPiece = type == TileType.Road ? PieceData.GetPiece(type, sides) : PieceData.GetPiece(type);
 
             if (newPiece == null) return;
 
-            var pos = piece.Prefab.transform.position;
-            var rotation = piece.Prefab.transform.rotation;
-            var prevType = piece.Type;
+            newPiece.Prefab.transform.position = piece.Prefab.transform.position;
+            
+            int rotation = piece.Rotation;
+            _pool.KillPiece(ref piece, piece.TileType);
+            PieceData.ChangeType(newPiece, piece.Type);
 
             piece = newPiece;
-            piece.Prefab = Instantiate(newPiece.Prefab, pos, Quaternion.identity, transform);
             piece.Rotate();
-
-            PieceData.ChangeType(piece, prevType);
         }
 
         public void SetPiece(ref Piece piece, in (int x, int y) pos)
@@ -500,7 +499,11 @@ namespace WorldG.level
 
         public void SetPiece(ref Piece piece, Vector3 curPos)
         {
-            piece.Prefab = Instantiate(PieceData.GetPiece(TileType.Solid).Prefab, position: curPos, rotation: Quaternion.identity, parent: transform);
+            _pool.GetPiece(ref piece, piece.TileType);
+            piece.Prefab.transform.position = curPos;
+            piece.Prefab.transform.parent = transform;
+            //piece.Prefab = Instantiate(PieceData.GetPiece(TileType.Solid).Prefab, position: curPos, rotation: Quaternion.identity, parent: transform);
+            piece.Rotate();
 
             PieceData.ChangeType(piece, piece.Type);
         }

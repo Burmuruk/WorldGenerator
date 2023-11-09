@@ -9,7 +9,7 @@ namespace WorldG.Patrol
         public Vector3 EndNode { get; }
         public IPathNode[] Nodes { get; }
 
-        public void SetTarget(Vector3 start, Vector3 end, Vector3[] nodes, float pRadious = .2f);
+        public void SetTarget(IPathNode[] nodes, float pRadious = .2f, float maxDistance = 2, float maxAngle = 45, float height = 1);
 
         public IPathNode FindNearestNode(Vector3 start);
 

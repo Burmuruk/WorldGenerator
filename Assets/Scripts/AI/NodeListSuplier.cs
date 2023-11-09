@@ -11,6 +11,7 @@ namespace WorldG.Patrol
         private float maxDistance = 2;
         private float maxAngle = 5;
         float pRadious = .5f;
+        float height = 1;
 
         public pState connectionsState = pState.None;
 
@@ -20,6 +21,7 @@ namespace WorldG.Patrol
 
         public IPathNode[] Nodes => nodes;
 
+        #region Public methods
         public void CalculateNodesConnections()
         {
             if (connectionsState == pState.running || connectionsState == pState.deleting) return;
@@ -28,6 +30,54 @@ namespace WorldG.Patrol
             ClearNodeConnections();
             InitializeNodeLists();
         }
+
+        public void Clear() => nodes = null;
+
+        public void ClearNodeConnections()
+        {
+            if (connectionsState == pState.running || connectionsState == pState.deleting || connectionsState != pState.finished)
+                return;
+
+            if (nodes == null || nodes.Length <= 0) return;
+
+            connectionsState = pState.deleting;
+
+            foreach (var node in nodes)
+                node.ClearConnections();
+
+            connectionsState = pState.None;
+        }
+
+        public IPathNode FindNearestNode(Vector3 start)
+        {
+            if (nodes == null || nodes.Length <= 0) return default;
+
+            float minDistance = float.MaxValue;
+            int? index = -1;
+
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                if (Vector3.Distance(nodes[i].Position, start) is var d && d < minDistance)
+                {
+                    minDistance = d;
+                    index = i;
+                }
+            }
+
+            return index.HasValue ? nodes[index.Value] : null;
+        }
+
+        public void SetTarget(IPathNode[] nodes, float pRadious = .2f, float maxDistance = 2, float maxAngle = 45, float height = 1)
+        {
+            this.nodes = nodes;
+            this.pRadious = pRadious;
+            this.maxDistance = maxDistance;
+            this.maxAngle = maxAngle;
+            this.height = height;
+
+            CalculateNodesConnections();
+        } 
+        #endregion
 
         private void InitializeNodeLists()
         {
@@ -89,50 +139,6 @@ namespace WorldG.Patrol
 
                 return dif;
             }
-        }
-
-        public void Clear() => nodes = null;
-
-        public void ClearNodeConnections()
-        {
-            if (connectionsState == pState.running || connectionsState == pState.deleting || connectionsState != pState.finished) 
-                return;
-
-            if (nodes == null || nodes.Length <= 0) return;
-
-            connectionsState = pState.deleting;
-
-            foreach (var node in nodes)
-                node.ClearConnections();
-
-            connectionsState = pState.None;
-        }
-
-        public IPathNode FindNearestNode(Vector3 start)
-        {
-            if (nodes == null || nodes.Length <= 0) return default;
-
-            float minDistance = float.MaxValue;
-            int? index = -1;
-
-            for (int i = 0; i < nodes.Length; i++)
-            {
-                if (Vector3.Distance(nodes[i].Position, start) is var d && d < minDistance)
-                {
-                    minDistance = d;
-                    index = i;
-                }
-            }
-
-            return index.HasValue ? nodes[index.Value] : null;
-        }
-
-        public void SetTarget(Vector3 start, Vector3 end, Vector3[] nodes, float pRadious = .2f)
-        {
-            this.startNode = start;
-            this.endNode = end;
-            //this.nodes = nodes;
-            this.pRadious = pRadious;
         }
 
         private float Get_Magnitud(IPathNode nodeA, IPathNode nodeB) =>

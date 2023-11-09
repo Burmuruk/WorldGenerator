@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Coco.AI.PathFinding;
+using WorldG.Patrol;
 
 public enum pState
 {
@@ -55,13 +56,13 @@ namespace Coco.AI
 
         Dijkstra dijkstra;
         uint nodeCount = 0;
-        List<(ScrNode node, ScrNode hitPos)> edgesToFix;
+        List<(IPathNode node, IPathNode hitPos)> edgesToFix;
 
         public pState dijkstraState = pState.None;
         public pState meshState = pState.None;
         public pState connectionsState = pState.None;
 
-        private List<ScrNode> nodes = new List<ScrNode>();
+        private List<IPathNode> nodes = new List<IPathNode>();
         #endregion
 
         #region Properties
@@ -105,7 +106,7 @@ namespace Coco.AI
                     return false;
             }
         }
-        public List<ScrNode> Nodes
+        public List<IPathNode> Nodes
         {
             get
             {
@@ -115,7 +116,7 @@ namespace Coco.AI
                     {
                         for (int i = 0; i < transform.childCount; i++)
                         {
-                            var node = transform.GetChild(i).GetComponent<ScrNode>();
+                            var node = transform.GetChild(i).GetComponent<IPathNode>();
 
                             if (node != null)
                                 nodes.Add(node);
@@ -181,15 +182,15 @@ namespace Coco.AI
             if (!startNode || !endNode) return;
             if (AreProcessRunning || AreProcessDeleting) return;
 
-            nearestStart = startNode.GetComponent<ScrNode>() == null ? true : false;
-            nearestEnd = endNode.GetComponent<ScrNode>() == null ? true : false;
+            nearestStart = startNode.GetComponent<IPathNode>() == null ? true : false;
+            nearestEnd = endNode.GetComponent<IPathNode>() == null ? true : false;
 
-            (ScrNode start, ScrNode end) = (nearestStart, nearestEnd) switch
+            (IPathNode start, IPathNode end) = (nearestStart, nearestEnd) switch
             {
                 (true, true) => (Find_NearestNode(startNode.transform.position), Find_NearestNode(endNode.transform.position)),
-                (true, false) => (Find_NearestNode(startNode.transform.position), endNode.GetComponent<ScrNode>()),
-                (false, true) => (startNode.GetComponent<ScrNode>(), Find_NearestNode(endNode.transform.position)),
-                _ => (startNode.GetComponent<ScrNode>(), endNode.GetComponent<ScrNode>())
+                (true, false) => (Find_NearestNode(startNode.transform.position), endNode.GetComponent<IPathNode>()),
+                (false, true) => (startNode.GetComponent<IPathNode>(), Find_NearestNode(endNode.transform.position)),
+                _ => (startNode.GetComponent<IPathNode>(), endNode.GetComponent<IPathNode>())
             };
 
             if (dijkstra != null)
@@ -199,8 +200,8 @@ namespace Coco.AI
             dijkstraState = pState.running;
             dijkstra.Start_Algorithm(out _);
 
-            Debug.DrawLine(start.transform.position, start.transform.position + Vector3.up * 25, Color.red, 10);
-            Debug.DrawLine(end.transform.position, end.transform.position + Vector3.up * 25, Color.red, 10);
+            Debug.DrawLine(start.Position, start.Position + Vector3.up * 25, Color.red, 10);
+            Debug.DrawLine(end.Position, end.Position + Vector3.up * 25, Color.red, 10);
 
             if (dijkstra.Calculated)
                 dijkstraState = pState.finished;
@@ -213,22 +214,22 @@ namespace Coco.AI
             if (AreProcessRunning || AreProcessDeleting || meshState != pState.finished) return;
 
             meshState = pState.deleting;
-            var nodes = transform.GetComponentsInChildren<ScrNode>();
+            var nodes = transform.GetComponentsInChildren<IPathNode>();
             nodeCount = 0;
             this.nodes.Clear();
 
-            foreach (var node in nodes)
-            {
-#if UNITY_EDITOR
-                DestroyImmediate(node.gameObject);
-                continue;
-#endif
+//            foreach (var node in nodes)
+//            {
+//#if UNITY_EDITOR
+//                DestroyImmediate(node.gameObject);
+//                continue;
+//#endif
 
-                Destroy(node.gameObject);
-            }
+//                Destroy(node.gameObject);
+//            }
 
-            CreateMesh = true;
-            meshState = pState.None;
+//            CreateMesh = true;
+//            meshState = pState.None;
         }
 
         public void Clear_NodeConections()
@@ -236,10 +237,10 @@ namespace Coco.AI
             if (AreProcessRunning || AreProcessDeleting || connectionsState != pState.finished) return;
 
             connectionsState = pState.deleting;
-            var nodes = transform.GetComponentsInChildren<ScrNode>();
+            var nodes = transform.GetComponentsInChildren<IPathNode>();
 
             foreach (var node in nodes)
-                node.Clear_Connections();
+                node.ClearConnections();
 
             if (HasDijkstra)
                 Clear_Dijkstra();
@@ -252,7 +253,7 @@ namespace Coco.AI
             if (AreProcessDeleting || AreProcessRunning) return;
 
             dijkstraState = pState.deleting;
-            var nodes = transform.GetComponentsInChildren<ScrNode>();
+            var nodes = transform.GetComponentsInChildren<IPathNode>();
 
             if (dijkstra != null)
                 dijkstra.Clear();
@@ -265,21 +266,21 @@ namespace Coco.AI
             return null;
         }
 
-        public List<ScrNode> Get_Nodes() => nodes;
+        public List<IPathNode> Get_Nodes() => nodes;
 
         #endregion
 
         #region Connections
         private void InitializeNodeLists()
         {
-            ScrNode[] nodes;
+            IPathNode[] nodes;
             if (this.nodes.Count <= 0)
-                nodes = transform.GetComponentsInChildren<ScrNode>();
+                nodes = transform.GetComponentsInChildren<IPathNode>();
             else
                 nodes = this.nodes.ToArray();
             
             var maxDis = maxDistance / Mathf.Sin(maxAngle * Mathf.PI / 180);
-            edgesToFix = new List<(ScrNode node, ScrNode hitPos)>();
+            edgesToFix = new List<(IPathNode node, IPathNode hitPos)>();
 
             for (int i = 0; i < nodes.Length; i++)
             {
@@ -310,12 +311,12 @@ namespace Coco.AI
 
                         (ConnectionType a, ConnectionType b) types = Get_Types(hitted1, hitted2);
 
-                        if (!hitted1)
-                            cur.nodeConnections.Add(
-                                new NodeConnection(cur, nodes[j], m, types.a));
-                        if (!hitted2)
-                            nodes[j].nodeConnections.Add(
-                                new NodeConnection(nodes[j], cur, m, types.b));
+                        //if (!hitted1)
+                        //    cur.NodeConnections.Add(
+                        //        new NodeConnection(cur, nodes[j], m, types.a));
+                        //if (!hitted2)
+                        //    nodes[j].NodeConnections.Add(
+                        //        new NodeConnection(nodes[j], cur, m, types.b));
                     }
                     //else
                     //{
@@ -348,30 +349,30 @@ namespace Coco.AI
                     _ => (ConnectionType.None, ConnectionType.None),
                 };
             }
-            float Get_VerticalDifference(ScrNode node, ScrNode cur)
+            float Get_VerticalDifference(IPathNode node, IPathNode cur)
             {
                 float dif = 0;
 
-                if (node.transform.position.y > cur.transform.position.y)
+                if (node.Position.y > cur.Position.y)
                 {
-                    dif = node.transform.position.y - cur.transform.position.y;
+                    dif = node.Position.y - cur.Position.y;
                 }
                 else
-                    dif = cur.transform.position.y - node.transform.position.y;
+                    dif = cur.Position.y - node.Position.y;
 
                 return dif;
             }
         }
 
-        private void Set_OffsetOnEdge(ScrNode a, ScrNode hitPos)
+        private void Set_OffsetOnEdge(IPathNode a, IPathNode hitPos)
         {
-            float distBetween = Vector3.Distance(a.transform.position, hitPos.transform.position);
+            float distBetween = Vector3.Distance(a.Position, hitPos.Position);
             //float disToHit;
-            var direction = hitPos.transform.position - a.transform.position;
+            var direction = hitPos.Position - a.Position;
 
             RaycastHit hit;
-            if (!Physics.Raycast(a.transform.position, direction, out hit, distBetween) &&
-                !Physics.Raycast(hitPos.transform.position, direction * -1, out hit, distBetween))
+            if (!Physics.Raycast(a.Position, direction, out hit, distBetween) &&
+                !Physics.Raycast(hitPos.Position, direction * -1, out hit, distBetween))
                 return;
 
             if (MinDistance < pRadious / 2)
@@ -386,25 +387,25 @@ namespace Coco.AI
             {
                 //var finalPos = direction + direction.normalized * (disToHit - pRadious);
                 //transform.position = direction + direction.normalized * (disToHit - pRadious);
-                Debug.DrawLine(a.transform.position, hit.point + Vector3.up * 10, Color.red, 5);
+                Debug.DrawLine(a.Position, hit.point + Vector3.up * 10, Color.red, 5);
             }
         }
 
-        private float Get_Magnitud(ScrNode nodeA, ScrNode nodeB) =>
-            Vector3.Distance(nodeA.transform.position, nodeB.transform.position);
+        private float Get_Magnitud(IPathNode nodeA, IPathNode nodeB) =>
+            Vector3.Distance(nodeA.Position, nodeB.Position);
 
-        bool Detect_OjbstaclesBetween(ScrNode nodeA, ScrNode nodeB, out float groundNormal)
+        bool Detect_OjbstaclesBetween(IPathNode nodeA, IPathNode nodeB, out float groundNormal)
         {
             groundNormal = 0;
             RaycastHit[] hit;
-            var pointA = nodeA.transform.position + new Vector3(0, pRadious, 0);
-            var pointB = nodeA.transform.position + new Vector3(0, 2 * pRadious + 1, 0);
+            var pointA = nodeA.Position + new Vector3(0, pRadious, 0);
+            var pointB = nodeA.Position + new Vector3(0, 2 * pRadious + 1, 0);
 
-            var dir = (nodeB.transform.position - nodeA.transform.position);
+            var dir = (nodeB.Position - nodeA.Position);
 
-            hit = Physics.CapsuleCastAll(pointA, pointB, pRadious, dir.normalized, Vector3.Distance(nodeA.transform.position, nodeB.transform.position));
+            hit = Physics.CapsuleCastAll(pointA, pointB, pRadious, dir.normalized, Vector3.Distance(nodeA.Position, nodeB.Position));
             Debug.DrawLine(pointA, pointB);
-            Debug.DrawRay(pointA, dir.normalized * Vector3.Distance(nodeA.transform.position, nodeB.transform.position));
+            Debug.DrawRay(pointA, dir.normalized * Vector3.Distance(nodeA.Position, nodeB.Position));
 
             bool hitted = false;
             for (int k = 0; k < hit.Length; k++)
@@ -526,8 +527,8 @@ namespace Coco.AI
             var newNode = Instantiate(Node, transform);
             newNode.transform.position = position;
             newNode.transform.name = "Node " + nodeCount.ToString();
-            var nodeCs = newNode.GetComponent<ScrNode>();
-            nodeCs.SetIndex(nodeCount++);
+            var nodeCs = newNode.GetComponent<IPathNode>();
+            //nodeCs.SetIndex(nodeCount++);
             nodes.Add(nodeCs);
         }
 
@@ -555,7 +556,7 @@ namespace Coco.AI
 
         private void Draw_Mesh()
         {
-            var nodes = transform.GetComponentsInChildren<ScrNode>();
+            var nodes = transform.GetComponentsInChildren<IPathNode>();
 
             for (int i = 0; i < nodes.Length; i++)
             {
@@ -569,7 +570,7 @@ namespace Coco.AI
                         bool hitted2 = Detect_OjbstaclesBetween(nodes[j], cur, out _);
 
                         if (!hitted1 && !hitted2)
-                            Debug.DrawLine(cur.transform.position + new Vector3(0, 1.5f, 0), (nodes[j].transform.position) + new Vector3(0, 1.5f, 0), Color.red);
+                            Debug.DrawLine(cur.Position + new Vector3(0, 1.5f, 0), (nodes[j].Position) + new Vector3(0, 1.5f, 0), Color.red);
                     }
                 }
             }
@@ -577,11 +578,11 @@ namespace Coco.AI
         #endregion
 
         #region Dijkstra
-        public ScrNode Find_NearestNode(Vector3 start)
+        public IPathNode Find_NearestNode(Vector3 start)
         {
-            ScrNode[] nodes;
+            IPathNode[] nodes;
             if (this.nodes.Count <= 0)
-                nodes = transform.GetComponentsInChildren<ScrNode>();
+                nodes = transform.GetComponentsInChildren<IPathNode>();
             else
                 nodes = this.nodes.ToArray();
 
@@ -590,7 +591,7 @@ namespace Coco.AI
 
             for (int i = 0; i < nodes.Length; i++)
             {
-                if (Vector3.Distance(nodes[i].transform.position, start) is var d && d < minDistance)
+                if (Vector3.Distance(nodes[i].Position, start) is var d && d < minDistance)
                 {
                     minDistance = d;
                     index = i;
@@ -607,7 +608,7 @@ namespace Coco.AI
 
             for (int i = 0; i < path.Count - 1; i++)
             {
-                Debug.DrawLine(node.Value.transform.position + Vector3.up, node.Next.Value.transform.position + Vector3.up, Color.black);
+                Debug.DrawLine(node.Value.Position + Vector3.up, node.Next.Value.Position + Vector3.up, Color.black);
 
                 node = node.Next;
             }

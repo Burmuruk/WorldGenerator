@@ -11,13 +11,13 @@ namespace WorldG.Patrol
         #region Variables
         [SerializeField] Spline spline;
         [SerializeField] CyclicType cyclicType = CyclicType.None;
-        [SerializeField] PathFinder<AStar> pathFinder;
+        //[SerializeField] PathFinder<AStar> pathFinder;
         INodeListSupplier nodeList;
         [Space(20)]
         [SerializeField] bool shouldRepeat = false;
         [SerializeField] List<Task> tasks = new List<Task>();
         Movement mover;
-        IPathFinder finder;
+        PathFinder finder;
 
         public enum TaskType
         {
@@ -42,6 +42,7 @@ namespace WorldG.Patrol
         Transform nextPoint = default;
         object taskValue = default;
         IEnumerator<ISplineNode> enumerator = null;
+        PatrolController innerController = null;
 
         #endregion
 
@@ -50,22 +51,32 @@ namespace WorldG.Patrol
         {
             get
             {
-                if (enumerator == null)
-                    enumerator = (IEnumerator<ISplineNode>)spline.path.GetEnumerator();
+                enumerator??= (IEnumerator<ISplineNode>)spline.path.GetEnumerator();
+
+                if (innerController != null)
+                {
+                    var next = innerController.NextPoint;
+                    if (next != null)
+                        return next;
+                    else
+                        innerController = null;
+                }
 
                 if (enumerator.MoveNext())
                 {
+                    if (enumerator.Current.PatrolController)
+                    {
+                        innerController = enumerator.Current.PatrolController;
+                        return innerController.NextPoint;
+                    }
+                    else
+
                     return currentPoint = enumerator.Current.Transform;
                 }
                 else
                     return default;
             }
         } 
-
-        public void Initialize()
-        {
-
-        }
         #endregion
 
         #region private methods
@@ -82,7 +93,52 @@ namespace WorldG.Patrol
                 };
         }
 
-        private void Start()
+        private void OnEnable()
+        {
+            if (!mover) return;
+
+            mover.OnFinished += () => Execute_Tasks(shouldRepeat);
+        }
+
+        private void OnDisable()
+        {
+            if (mover)
+                mover.OnFinished -= () => Execute_Tasks(shouldRepeat);
+        }
+
+        public void SetNodeList(INodeListSupplier nodeList, CyclicType cyclicType)
+        {
+            this.cyclicType = cyclicType;
+
+            finder = new PathFinder(nodeList);
+        }
+
+        public void FindNodes<U>(CyclicType cyclicType, INodeListSupplier nodeList)
+            where U : MonoBehaviour, IPathNode, ISplineNode
+        {
+            this.cyclicType = cyclicType;
+            List<IPathNode> nodes = new();
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                var node = transform.GetChild(i).GetComponent<U>();
+                if (node)
+                    nodes.Add(node);
+            }
+
+            nodeList.SetNodes(nodes.ToArray());
+            this.finder = new PathFinder(nodeList);
+        }
+
+        public void CreatePatrolWithSpline<T>(Vector3 start, Vector3 end) where T : IPathFinder, new()
+        {
+            finder.Find_BestRoute<T>((start, end));
+            var route = finder.BestRoute;
+            print("Total nodes!! =>  " + route?.Count);
+            //gameObject.AddComponent<Spline>();
+        }
+
+        public void Initialize()
         {
             if (spline)
             {
@@ -96,36 +152,9 @@ namespace WorldG.Patrol
             {
                 tasksList.Add(actionsList[task.type]);
             }
-
-            Execute_Tasks();
         }
 
-        private void OnEnable()
-        {
-            if (!mover) return;
-
-            mover.OnFinished += Execute_Tasks;
-        }
-
-        private void OnDisable()
-        {
-            if (mover)
-                mover.OnFinished -= Execute_Tasks;
-        }
-
-        public void CreatePatrolWithSpline<T>(Vector3 start, Vector3 end, CyclicType cyclicType, INodeListSupplier nodeList) where T : IPathNode, ISplineNode
-        {
-            //this.spline = Instantiate(spline, transform).GetComponent<Spline>();
-            //this.spline.cyclicType = cyclicType;
-            //this.spline.Initialize(nodes);
-
-            //pathFinder = new PathFinder<AStar>(nodeList);
-            //pathFinder.Find_BestRoute((start, end));
-        }
-
-        public void SetSpline(Spline spline) => this.spline = spline;
-
-        private void Execute_Tasks()
+        public void Execute_Tasks(bool repeat)
         {
             if (currentAction < tasksList.Count && tasksList != null)
             {
@@ -133,10 +162,10 @@ namespace WorldG.Patrol
                 //print(currentAction);
                 tasksList[currentAction++].Invoke();
             }
-            else if (shouldRepeat && tasksList != null && currentAction >= tasksList.Count)
+            else if (repeat && tasksList != null && currentAction >= tasksList.Count)
             {
                 currentAction = 0;
-                Execute_Tasks();
+                Execute_Tasks(repeat);
             }
         } 
         #endregion

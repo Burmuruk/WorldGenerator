@@ -121,6 +121,7 @@ GameObject:
   - component: {fileID: 7226222713985420536}
   - component: {fileID: 7226222713985420537}
   - component: {fileID: 7226222713985420542}
+  - component: {fileID: 91872285117225310}
   m_Layer: 5
   m_Name: MinionSelection
   m_TagString: Untagged
@@ -210,6 +211,25 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &91872285117225310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7226222713985420543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e803132fa947da4a8f47c370adaa4c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  characterImage:
+  - image: {fileID: 21300000, guid: a60f991c99b21b64c93a16f0c41b568f, type: 3}
+    characterType: 2
+  - image: {fileID: 21300000, guid: a60f991c99b21b64c93a16f0c41b568f, type: 3}
+    characterType: 3
+  panel: {fileID: 7226222714616372131}
+  buttons: []
 --- !u!1 &7226222714013310293
 GameObject:
   m_ObjectHideFlags: 0

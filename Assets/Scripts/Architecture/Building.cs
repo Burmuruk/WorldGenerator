@@ -20,6 +20,7 @@ namespace WorldG.Control
         LevelGenerator _levelGenerator;
         PoolManager _poolManager;
         MinionsManager _minionsManager;
+        MinionPopUpMenu _minionPopUpMenu;
         Action onDie;
 
         public bool IsWorking { get => _isWorking; }
@@ -40,6 +41,7 @@ namespace WorldG.Control
             _minionsManager = FindObjectOfType<MinionsManager>();
             _poolManager = FindObjectOfType<PoolManager>();
             id = GetHashCode();
+            _minionPopUpMenu = FindObjectOfType<MinionPopUpMenu>();
         }
 
         private void Start()
@@ -72,7 +74,6 @@ namespace WorldG.Control
             try
             {
                 _isWorking = true;
-                print("One");
                 ShowItems();
             }
             catch (Exception e)
@@ -118,7 +119,10 @@ namespace WorldG.Control
 
         private void ShowItems()
         {
-            buttons.transform.gameObject.SetActive(!buttons.activeSelf);
+            var pos = transform.position + new Vector3(2, 2 , 1);
+            _minionPopUpMenu.SetPlace(pos, CreateMinion, id, products);
+            //buttons.transform.gameObject.SetActive(!buttons.activeSelf);
+
         }
 
         private void Die()

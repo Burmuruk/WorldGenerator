@@ -10,6 +10,7 @@ namespace WorldG.Patrol
     {
         #region variables
         [Header("Nodes")]
+        [SerializeField] GameObject prefab;
         [SerializeField] public float verticalOffset = 1;
         [SerializeField] public float nodeRadius = .5f;
         [SerializeField] public Color nodeColor = Color.blue;

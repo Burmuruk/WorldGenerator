@@ -12,6 +12,7 @@ namespace WorldG.level
         [SerializeField] Vector2Int size = new Vector2Int(10, 10);
         PoolManager _pool;
         Vector2Int startPoint;
+        public Action OnRoadAdded;
 
         readonly Vector2Int[] directions =
         {
@@ -49,8 +50,6 @@ namespace WorldG.level
         {
 
         }
-
-        //public void Get
 
         private void GetStartPoint()
         {
@@ -187,6 +186,7 @@ namespace WorldG.level
             if (connections.Count == 0) return;
 
             RepleacePiece(ref cur, TileType.Road, connections.ToArray());
+            OnRoadAdded?.Invoke();
         }
 
         private (int idx, SideType side)[] GetSidesOfConnectedRoad(ref Piece neighbour, in int start)
@@ -452,9 +452,6 @@ namespace WorldG.level
 
         public Character SetCharacter(Vector3 pos, CharacterType type, uint rotation = 0)
         {
-            //var character = PieceData.GetCharacter(type);
-            //SetCharacter(pos, ref character, rotation);
-
             var character = _pool.GetCharacter(type);
             Vector3 toppPosition = new(pos.x, character.Prefab.transform.position.y, pos.z);
 
@@ -502,7 +499,7 @@ namespace WorldG.level
             _pool.GetPiece(ref piece, piece.TileType);
             piece.Prefab.transform.position = curPos;
             piece.Prefab.transform.parent = transform;
-            //piece.Prefab = Instantiate(PieceData.GetPiece(TileType.Solid).Prefab, position: curPos, rotation: Quaternion.identity, parent: transform);
+            
             piece.Rotate();
 
             PieceData.ChangeType(piece, piece.Type);

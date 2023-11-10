@@ -18,5 +18,7 @@ namespace WorldG.Patrol
         public void Clear();
 
         public void ClearNodeConnections();
+
+        public void SetNodes(IPathNode[] nodes);
     }
 }

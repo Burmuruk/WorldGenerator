@@ -14,11 +14,11 @@ namespace Coco.AI.PathFinding
 		AStar
 	}
 
-	public class PathFinder<T> where T: IPathFinder, new()
+	public class PathFinder
 	{
 		#region Varibles
 		INodeListSupplier nodesList;
-		T algorithem;
+		IPathFinder algorithem;
 		public List<LinkedList<IPathNode>> paths;
 		public List<(int idx, float distance)> routeSizes = null;
 		LinkedList<IPathNode>.Enumerator enumerator;
@@ -36,11 +36,23 @@ namespace Coco.AI.PathFinding
         public Vector3 End { get => nodesList.EndNode; }
 
         #region public
-        public LinkedList<IPathNode> BestRoute { get => paths[routeSizes[curPath].idx]; }
+        public LinkedList<IPathNode> BestRoute { get => isCalculating ? null : paths[routeSizes[curPath].idx]; }
 
         public int? ShorstestNodeIdx { get => shorstestNodeIdx; }
 
+        public PathFinder()
+        {
+
+        }
+
         public PathFinder(INodeListSupplier nodesList)
+        {
+            this.nodesList = nodesList;
+            paths = new List<LinkedList<IPathNode>>();
+            enumerator = default;
+        }
+
+        public void SetNodeList(INodeListSupplier nodesList)
         {
             this.nodesList = nodesList;
             paths = new List<LinkedList<IPathNode>>();
@@ -52,12 +64,12 @@ namespace Coco.AI.PathFinding
             return algorithem.Get_Route(start, end, out distance);
         }
 
-        public void Find_BestRoute(params (Vector3 start, Vector3 end)[] pairs)
+        public void Find_BestRoute<T>(params (Vector3 start, Vector3 end)[] pairs) where T : IPathFinder, new()
         {
             if (isCalculating) return;
             if (nodesList.Nodes == null) return;
 
-            if (algorithem == null) algorithem = new();
+            if (algorithem == null) algorithem = new T();
             algorithem.SetNodeList(nodesList.Nodes);
             shorstestNodeIdx = null;
             curNodes = new (IPathNode start, IPathNode end)[pairs.Length];
@@ -95,9 +107,9 @@ namespace Coco.AI.PathFinding
             return;
         }
 
-        public void GoToEnd(Vector3 start)
+        public void GoToEnd<T>(Vector3 start) where T : IPathFinder, new()
         {
-            Find_BestRoute((start, nodesList.EndNode));
+            Find_BestRoute<T>((start, nodesList.EndNode));
 
         }
 

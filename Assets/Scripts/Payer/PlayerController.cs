@@ -35,7 +35,6 @@ namespace WorldG.Control
         {
             if (Input.GetMouseButtonUp(0))
             {
-                print(Time.time);
                 RaycastHit hit;
 
                 if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 200))
@@ -78,7 +77,10 @@ namespace WorldG.Control
                         selected = (hit.colliderInstanceID, s);
                     }
                     else
+                    {
+                        _minionsManager.SetTarget(null, hit.collider.transform.position);
                         selected = (hit.colliderInstanceID, s);
+                    }
                 }
             }
         }

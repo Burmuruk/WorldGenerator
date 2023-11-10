@@ -26,8 +26,8 @@ namespace WorldG.Patrol
         {
             if (connectionsState == pState.running || connectionsState == pState.deleting) return;
 
-            connectionsState = pState.running;
             ClearNodeConnections();
+            connectionsState = pState.running;
             InitializeNodeLists();
         }
 
@@ -77,6 +77,10 @@ namespace WorldG.Patrol
 
             CalculateNodesConnections();
         } 
+
+        public void SetNodes(IPathNode[] nodes) =>
+            this.nodes = nodes;
+
         #endregion
 
         private void InitializeNodeLists()
@@ -149,7 +153,7 @@ namespace WorldG.Patrol
             groundNormal = 0;
             RaycastHit[] hit;
             var pointA = nodeA.Position + new Vector3(0, pRadious, 0);
-            var pointB = nodeA.Position + new Vector3(0, 2 * pRadious + 1, 0);
+            var pointB = nodeA.Position + new Vector3(0, 2 * pRadious + height, 0);
 
             var dir = (nodeB.Position - nodeA.Position);
 

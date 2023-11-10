@@ -42,26 +42,27 @@ namespace WorldG.Patrol
         [SerializeField]
         public List<NodeConnection> nodeConnections = new List<NodeConnection>();
         [HideInInspector]
-        public uint idx;
+        public uint idx = 0;
         public NodeData nodeData = null;
         public static CopyData copyData;
+        private bool isSelected = false;
+        private PatrolController patrol;
 
-        public ConnectionType ConnectionType => throw new NotImplementedException();
-
-        public uint ID => idx;
-
+        public uint ID => idx == 0 ? idx = (uint)GetInstanceID() : idx;
         public Transform Transform { get => transform; }
         public List<NodeConnection> NodeConnections { get => nodeConnections; }
-
-        public NodeData NodeData => throw new NotImplementedException();
-
-        public bool IsSelected => throw new NotImplementedException();
-
+        public NodeData NodeData => nodeData;
+        public bool IsSelected => isSelected;
         public Vector3 Position { get => transform.position; }
-
-        public Action OnStart { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public Action OnStart { get; set; }
+        public PatrolController PatrolController { get => patrol; set => patrol = value; }
 
         #region Unity methods
+        private void Start()
+        {
+            OnStart?.Invoke();
+        }
+
         private void OnDrawGizmosSelected()
         {
             foreach (var item in nodeConnections)
@@ -77,20 +78,10 @@ namespace WorldG.Patrol
             nodeConnections.Clear();
         }
 
-        public float GetDistanceBetween(PatrolPoint a, PatrolPoint b)
-        {
-            throw new NotImplementedException();
-        }
-
         public float GetDistanceBetweenNodes(in NodeConnection connection)
         {
             Vector3 value = connection.node.Position - transform.position;
             return value.magnitude;
-        }
-
-        public void Initilize()
-        {
-            throw new NotImplementedException();
         }
 
         public void SetIndex(uint idx) => this.idx = idx;

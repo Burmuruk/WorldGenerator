@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.ConstrainedExecution;
-using Unity.VisualScripting;
-using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.XR;
 using WorldG.Control;
 
 namespace WorldG.level
@@ -19,7 +14,7 @@ namespace WorldG.level
         private Dictionary<CharacterType, LinkedList<Minion>> _charactersPool = new();
         private Dictionary<int, List<Minion>> _minions = new();
 
-        public Dictionary<int, List<Minion>> Minions { get => _minions; }
+        public Dictionary<CharacterType, LinkedList<Minion>> Minions { get => _charactersPool; }
         
         public struct MinionGroup
         {

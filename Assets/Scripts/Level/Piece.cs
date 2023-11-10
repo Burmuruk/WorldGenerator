@@ -142,11 +142,6 @@ public record Piece
         id = versionID;
     }
 
-    //public void Deconstruct(out GameObject go)
-    //{
-    //    go = piece;
-    //}
-
     public void SetTopping(Topping topping)
     {
         this._topping = topping;

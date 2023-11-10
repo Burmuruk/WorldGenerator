@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Coco.AI.PathFinding;
+using System;
 using UnityEngine;
 using WorldG.Patrol;
 
@@ -19,7 +20,7 @@ namespace WorldG.Control
 
         private void Awake()
         {
-            _patrolController = gameObject.AddComponent<PatrolController>();
+            _patrolController = gameObject.GetComponent<PatrolController>();
             movement = GetComponent<Movement>();
         }
 
@@ -53,11 +54,18 @@ namespace WorldG.Control
         public void Move(object destiny)
         {
             Vector3 target = (Vector3)destiny;
-            Debug.DrawRay(target, target + Vector3.up * 10);
+            Debug.DrawRay(target, Vector3.up * 10, Color.white, 10);
 
+
+            print("Moving");
+            _patrolController.CreatePatrolWithSpline<AStar>(transform.position, target);
             
+        }
 
-            //_patrolController.SetTarget()
+        public void SetConnections(INodeListSupplier nodeList)
+        {
+            _patrolController.SetNodeList(nodeList, CyclicType.None);
+            //_patrolController.Initialize();
         }
     }
 

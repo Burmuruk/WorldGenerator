@@ -1,4 +1,6 @@
 ﻿using Coco.AI;
+using Coco.AI.PathFinding;
+using JetBrains.Annotations;
 using System.Collections.Generic;
 using UnityEngine;
 using WorldG.Architecture;
@@ -13,13 +15,13 @@ namespace WorldG.level
         List<Minion> selected = new();
 
         NodeListSuplier roadsConnections;
-        List<IPathNode> roads = null;
+        List<MyNode> roads = null;
         PoolManager pool;
 
         public struct FarmingRecord
         {
             int ID;
-            List<Minion> Minions { get; set; }
+            public List<Minion> Minions { get; set; }
         }
 
         private void Awake()
@@ -83,25 +85,63 @@ namespace WorldG.level
         private void GetRoadsConnections()
         {
             print("Road");
-            if (roads != null && roads.Count > 0) return ;
+            //if (roads != null && roads.Count > 0) return ;
 
             roadsConnections = new();
             var pieces = pool.GetRoads();
-            roads = new List<IPathNode>();
+            //roads = new List<IPathNode>();
 
+            //bool needMore = roads != null && roads.Count <= 0;
+            int total = (roads??= new()).Count;
+            var cur = pieces.First;
             int i = 0;
-            foreach (var node in pieces)
+            for (; i < pieces.Count; i++)
             {
-                var newPoint = new GameObject("Road" + i, typeof(MyNode));
-                newPoint.transform.position = node.Prefab.transform.position + Vector3.up * 2;
-                var newNode = newPoint.GetComponent<MyNode>();
-                newPoint.transform.parent = transform;
+                GameObject newPoint = null;
+                MyNode newNode = null;
+                if (i >= total)
+                {
+                    newPoint = new GameObject("Road" + i, typeof(MyNode));
+                    newNode = newPoint.GetComponent<MyNode>();
 
-                roads.Add(newNode);
-                i++;
+                    roads.Add(newNode);
+                }
+                else
+                {
+                    newPoint = roads[i].gameObject;
+                    newNode = newPoint.GetComponent<MyNode>();
+                }
+
+                while (newPoint.transform.childCount > 0)
+                    Destroy(newPoint.transform.GetChild(0));
+
+                newPoint.transform.position = cur.Value.Prefab.transform.position + Vector3.up * 2;
+                newPoint.transform.parent = transform;
+                newNode.SetIndex((uint)i);
+                
+                if (cur.Value.Topping.Patrol)
+                {
+                    var newPatrol = Instantiate(cur.Value.Topping.Patrol.gameObject, newPoint.transform);
+                    NodeListSuplier list = new();
+                    list.SetTarget(null, maxAngle: 20);
+                    newPatrol.GetComponent<PatrolController>().FindNodes<MyNode>(CyclicType.None, list);
+                }
+                
+                cur = cur.Next;
             }
 
+            if (i < roads.Count)
+                while (i < roads.Count)
+                    Destroy(roads[i]);
+
             roadsConnections.SetTarget(roads.ToArray(), maxAngle: 20);
+
+            foreach (var group in pool.Minions.Values)
+            {
+                if (group != null)
+                    foreach (var minion in group)
+                        minion.SetConnections(roadsConnections);
+            }
         }
 
         private void Initialize()

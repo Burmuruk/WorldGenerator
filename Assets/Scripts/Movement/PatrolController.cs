@@ -1,6 +1,7 @@
 ﻿using Coco.AI.PathFinding;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace WorldG.Patrol
@@ -132,10 +133,44 @@ namespace WorldG.Patrol
 
         public void CreatePatrolWithSpline<T>(Vector3 start, Vector3 end) where T : IPathFinder, new()
         {
+            finder.OnPathCalculated += () =>
+            {
+                var route = finder.BestRoute;
+                print("Total nodes!! =>  " + route?.Count);
+                CreateSpline();
+            };
             finder.Find_BestRoute<T>((start, end));
-            var route = finder.BestRoute;
-            print("Total nodes!! =>  " + route?.Count);
+            
             //gameObject.AddComponent<Spline>();
+        }
+
+        private void CreateSpline()
+        {
+            var route = finder.BestRoute.ToArray();
+
+            for (int i = 0; i < transform.childCount; i++)
+                if (transform.GetChild(i).GetComponent<Spline>())
+                {
+                    Destroy(transform.GetChild(i).gameObject);
+                    break;
+                }
+
+            var splineGO = new GameObject("Spline", typeof(Spline));
+            splineGO.transform.parent = transform;
+            var spline = splineGO.GetComponent<Spline>();
+
+            spline.cyclicType = cyclicType;
+
+            for (int i = 0; i < route.Length; i++)
+            {
+                var go = new GameObject("Node " + i, typeof(MyNode));
+                go.transform.parent = splineGO.transform;
+                go.transform.position = route[i].Position;
+            }
+
+            this.spline = spline;
+            Initialize();
+            Execute_Tasks(false);
         }
 
         public void Initialize()

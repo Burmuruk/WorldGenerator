@@ -11,6 +11,7 @@ namespace WorldG.Patrol
         public Vector3 Position { get; }
         public Action OnStart { get; set; }
         public Transform Transform { get; }
+
         public PatrolController PatrolController { get; set; }
     }
 }

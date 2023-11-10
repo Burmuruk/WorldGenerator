@@ -48,7 +48,7 @@ namespace WorldG.Patrol
         private bool isSelected = false;
         private PatrolController patrol;
 
-        public uint ID => idx == 0 ? idx = (uint)GetInstanceID() : idx;
+        public uint ID => idx;
         public Transform Transform { get => transform; }
         public List<NodeConnection> NodeConnections { get => nodeConnections; }
         public NodeData NodeData => nodeData;

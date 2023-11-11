@@ -1,7 +1,4 @@
-﻿using Coco.AI;
-using Coco.AI.PathFinding;
-using JetBrains.Annotations;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using WorldG.Architecture;
 using WorldG.Control;
@@ -38,7 +35,7 @@ namespace WorldG.level
                 if (!minion.IsWorking)
                 {
                     minion.Select();
-                    print("Selected");
+                    //print("Selected");
                     selected.Add(minion);
                 }
             }
@@ -134,7 +131,7 @@ namespace WorldG.level
                 while (i < roads.Count)
                     Destroy(roads[i]);
 
-            roadsConnections.SetTarget(roads.ToArray(), maxAngle: 20);
+            roadsConnections.SetTarget(roads.ToArray(), maxAngle: 20, maxDistance: 2.5f);
 
             foreach (var group in pool.Minions.Values)
             {

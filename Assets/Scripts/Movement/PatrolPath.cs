@@ -11,24 +11,24 @@ namespace WorldG.Patrol
         Backwards
     }
 
-    public class PatrolPath : ICollection<PatrolPoint>
+    public class PatrolPath<T> : ICollection<T> where T : ISplineNode
     {
         #region Variables
-        [SerializeField] LinkedList<PatrolPoint> points = new LinkedList<PatrolPoint>();
+        [SerializeField] LinkedList<T> points = new LinkedList<T>();
 
-        private LinkedListNode<PatrolPoint> lastSearched = null;
+        private LinkedListNode<T> lastSearched = null;
 
         private CyclicType cyclicType = CyclicType.None;
 
-        class Enumerator : IEnumerator<PatrolPoint>
+        class Enumerator : IEnumerator<T>
         {
-            PatrolPath collection;
+            PatrolPath<T> collection;
             int currentIndex = -1;
             CyclicType cyclicType = CyclicType.None;
-            LinkedListNode<PatrolPoint> current;
+            LinkedListNode<T> current;
             bool goingRight = true;
 
-            public Enumerator(PatrolPath collection)
+            public Enumerator(PatrolPath<T> collection)
             {
                 this.collection = collection;
                 this.cyclicType = collection.cyclicType;
@@ -41,7 +41,7 @@ namespace WorldG.Patrol
                 get { return current.Value; }
             }
 
-            PatrolPoint IEnumerator<PatrolPoint>.Current => current.Value;
+            T IEnumerator<T>.Current => current.Value;
 
             public void Dispose()
             {
@@ -162,18 +162,30 @@ namespace WorldG.Patrol
         #endregion
 
         #region Properties
-        public int Count => ((ICollection<PatrolPoint>)points).Count;
-        public bool IsReadOnly => ((ICollection<PatrolPoint>)points).IsReadOnly;
-        public PatrolPoint Last { get => points.Last.Value; }
-        public PatrolPoint First { get => points.First.Value; }
-        public LinkedListNode<PatrolPoint> FirstNode { get => points.First; }
-        public LinkedListNode<PatrolPoint> LastNode { get => points.Last; }
-        public PatrolPoint LastSearched { get => lastSearched.Value; }
-        public static bool operator true(PatrolPath p) => p != null;
-        public static bool operator false(PatrolPath p) => p == null; 
+        public int Count => ((ICollection<T>)points).Count;
+        public bool IsReadOnly => ((ICollection<T>)points).IsReadOnly;
+        public T Last { get => points.Last.Value; }
+        public T First { get => points.First.Value; }
+        public LinkedListNode<T> FirstNode { get => points.First; }
+        public LinkedListNode<T> LastNode { get => points.Last; }
+        public T LastSearched { get => lastSearched.Value; }
+        public static bool operator true(PatrolPath<T> p) => p != null;
+        public static bool operator false(PatrolPath<T> p) => p == null;
         #endregion
 
-        public PatrolPath(CyclicType cyclicType = CyclicType.None, params PatrolPoint[] points)
+        public PatrolPath() { }
+
+        public PatrolPath(CyclicType cyclicType = CyclicType.None, params T[] points)
+        {
+            foreach (var point in points)
+            {
+                Add(point);
+            }
+
+            this.cyclicType = cyclicType;
+        }
+
+        public void Initialize(CyclicType cyclicType = CyclicType.None, params T[] points)
         {
             foreach (var point in points)
             {
@@ -184,20 +196,20 @@ namespace WorldG.Patrol
         }
 
         #region Public methods
-        public IEnumerator<PatrolPoint> GetEnumerator()
+        public IEnumerator<T> GetEnumerator()
         {
             using (var enumerator = new Enumerator(this))
             {
                 while (enumerator.MoveNext())
                 {
-                    yield return (PatrolPoint)enumerator.Current;
+                    yield return (T)enumerator.Current;
                 }
             }
         }
 
         //{
 
-        //    return new Enumerator<PatrolPoint>(this);
+        //    return new Enumerator<T>(this);
             //foreach (var hi in points)
             //{
             //    yield return hi;
@@ -215,15 +227,15 @@ namespace WorldG.Patrol
             //    }
             //}
 
-            //return ((IEnumerable<PatrolPoint>)points).GetEnumerator();
+            //return ((IEnumerable<T>)points).GetEnumerator();
         //}
 
-        public void Add(PatrolPoint item)
+        public void Add(T item)
         {
             points.AddLast(item);
         }
 
-        public bool AddAfter(PatrolPoint node, PatrolPoint item)
+        public bool AddAfter(T node, T item)
         {
             var point = points.Find(node);
 
@@ -234,7 +246,7 @@ namespace WorldG.Patrol
             return true;
         }
 
-        public bool AddBefore(PatrolPoint node, PatrolPoint item)
+        public bool AddBefore(T node, T item)
         {
             var point = points.Find(node);
 
@@ -250,17 +262,17 @@ namespace WorldG.Patrol
             points.Clear();
         }
 
-        public bool Contains(PatrolPoint item)
+        public bool Contains(T item)
         {
             return points.Contains(item);
         }
 
-        public void CopyTo(PatrolPoint[] array, int arrayIndex)
+        public void CopyTo(T[] array, int arrayIndex)
         {
-            ((ICollection<PatrolPoint>)points).CopyTo(array, arrayIndex);
+            ((ICollection<T>)points).CopyTo(array, arrayIndex);
         }
 
-        public bool Remove(PatrolPoint item)
+        public bool Remove(T item)
         {
             if (points.Remove(item))
             {
@@ -270,7 +282,7 @@ namespace WorldG.Patrol
             return false;
         }
 
-        public PatrolPoint Next(PatrolPoint item = null)
+        public T Next(T item)
         {
             if (item)
                 lastSearched = points.Find(item);
@@ -278,7 +290,7 @@ namespace WorldG.Patrol
             return lastSearched.Next.Value;
         }
 
-        public PatrolPoint Prev(PatrolPoint item = null)
+        public T Prev(T item)
         {
             if (item)
                 lastSearched = points.Find(item);

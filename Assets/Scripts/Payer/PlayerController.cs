@@ -103,6 +103,7 @@ namespace WorldG.Control
                         _syncContext.Post((d) => clickable.DoubleClick(), null);
 
                     clickedItem = default;
+                    timer.Dispose();
                 };
             timer.Start();
 

@@ -78,6 +78,19 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: fb6bd972aaf5e6843a032dee1cfb5581, type: 3}
   m_PrefabInstance: {fileID: 3879897521179563659}
   m_PrefabAsset: {fileID: 0}
+--- !u!135 &6193532763844962593
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4114394418941701082}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &2445966568053904022
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -93,19 +106,24 @@ MonoBehaviour:
   _isSelected: 0
   _isWorking: 0
   spline: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
---- !u!135 &6193532763844962593
-SphereCollider:
+--- !u!114 &2753061562085790433
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4114394418941701082}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33b0ff04a4fe4524fac3272b5ef1eab7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spline: {fileID: 7164150994812226518, guid: 900d29e74c7a3c64cac133ba1d36f391, type: 3}
+  cyclicType: 0
+  shouldRepeat: 1
+  tasks:
+  - type: 2
+    value: 0
 --- !u!114 &7906095357720129653
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -122,21 +140,3 @@ MonoBehaviour:
   rotationVelocity: 2
   turnWhileMove: 1
   minDistance: 0.8
---- !u!114 &2753061562085790433
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4114394418941701082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33b0ff04a4fe4524fac3272b5ef1eab7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  spline: {fileID: 0}
-  cyclicType: 0
-  shouldRepeat: 1
-  tasks:
-  - type: 2
-    value: 0

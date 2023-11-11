@@ -11,6 +11,30 @@ PrefabInstance:
       propertyPath: prefab
       value: 
       objectReference: {fileID: 6700771872936961024, guid: 24e47e6a397860e458b244778424861d, type: 3}
+    - target: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
+      propertyPath: nodeData.radious
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
+      propertyPath: nodeData.shouldDraw
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
+      propertyPath: nodeData.nodeColor.b
+      value: 0.7075472
+      objectReference: {fileID: 0}
+    - target: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
+      propertyPath: nodeData.nodeColor.g
+      value: 0.2297163
+      objectReference: {fileID: 0}
+    - target: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
+      propertyPath: nodeData.nodeColor.r
+      value: 0.096119575
+      objectReference: {fileID: 0}
+    - target: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
+      propertyPath: nodeData.verticalOffset
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5646676414416912161, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
       propertyPath: m_RootOrder
       value: 0

@@ -52,25 +52,25 @@ namespace WorldG.Patrol
         {
             get
             {
-                enumerator??= (IEnumerator<ISplineNode>)spline.path.GetEnumerator();
+                enumerator??= spline.path.GetEnumerator();
 
-                if (innerController != null)
-                {
-                    var next = innerController.NextPoint;
-                    if (next != null)
-                        return next;
-                    else
-                        innerController = null;
-                }
+                //if (innerController != null)
+                //{
+                //    var next = innerController.NextPoint;
+                //    if (next != null)
+                //        return next;
+                //    else
+                //        innerController = null;
+                //}
 
                 if (enumerator.MoveNext())
                 {
-                    if (enumerator.Current.PatrolController)
-                    {
-                        innerController = enumerator.Current.PatrolController;
-                        return innerController.NextPoint;
-                    }
-                    else
+                    //if (enumerator.Current.PatrolController)
+                    //{
+                    //    innerController = enumerator.Current.PatrolController;
+                    //    return innerController.NextPoint;
+                    //}
+                    //else
 
                     return currentPoint = enumerator.Current.Transform;
                 }
@@ -89,7 +89,7 @@ namespace WorldG.Patrol
                 actionsList = new Dictionary<TaskType, Action>()
                 {
                     { TaskType.Turn, () => mover.TurnTo((float)taskValue) },
-                    { TaskType.Move, () => mover.MoveTo(NextPoint) },
+                    { TaskType.Move, () => { var n = NextPoint; shouldRepeat = n; mover.MoveTo(n); } },
                     { TaskType.Wait, () => Invoke("Execute_Tasks", (float)taskValue)}
                 };
         }
@@ -98,13 +98,13 @@ namespace WorldG.Patrol
         {
             if (!mover) return;
 
-            mover.OnFinished += () => Execute_Tasks(shouldRepeat);
+            mover.OnFinished += () => Execute_Tasks();
         }
 
         private void OnDisable()
         {
             if (mover)
-                mover.OnFinished -= () => Execute_Tasks(shouldRepeat);
+                mover.OnFinished -= () => Execute_Tasks();
         }
 
         public void SetNodeList(INodeListSupplier nodeList, CyclicType cyclicType)
@@ -155,8 +155,7 @@ namespace WorldG.Patrol
                     break;
                 }
 
-            var splineGO = new GameObject("Spline", typeof(Spline));
-            splineGO.transform.parent = transform;
+            var splineGO = Instantiate(this.spline, transform.parent.transform);
             var spline = splineGO.GetComponent<Spline>();
 
             spline.cyclicType = cyclicType;
@@ -170,7 +169,7 @@ namespace WorldG.Patrol
 
             this.spline = spline;
             Initialize();
-            Execute_Tasks(false);
+            Execute_Tasks();
         }
 
         public void Initialize()
@@ -189,7 +188,7 @@ namespace WorldG.Patrol
             }
         }
 
-        public void Execute_Tasks(bool repeat)
+        public void Execute_Tasks()
         {
             if (currentAction < tasksList.Count && tasksList != null)
             {
@@ -197,10 +196,10 @@ namespace WorldG.Patrol
                 //print(currentAction);
                 tasksList[currentAction++].Invoke();
             }
-            else if (repeat && tasksList != null && currentAction >= tasksList.Count)
+            else if (shouldRepeat && tasksList != null && currentAction >= tasksList.Count)
             {
                 currentAction = 0;
-                Execute_Tasks(repeat);
+                Execute_Tasks();
             }
         } 
         #endregion

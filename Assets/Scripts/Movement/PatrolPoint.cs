@@ -6,12 +6,12 @@ namespace WorldG.Patrol
     public struct CopyData
     {
         public bool wasSelected;
-        public PatrolPoint point;
+        public MyNode point;
 
-        public CopyData(bool wasSelected)
+        public CopyData(bool wasSelected, MyNode node)
         {
             this.wasSelected = wasSelected;
-            point = null;
+            point = node;
         }
     }
 
@@ -23,26 +23,33 @@ namespace WorldG.Patrol
         
         [NonSerialized] public static CopyData copyData;
 
-        public Action<PatrolPoint, PatrolPoint> OnNodeAdded;
-        public event Action<PatrolPoint> OnNodeRemoved;
+        public event Action<ISplineNode, ISplineNode> OnNodeAdded;
+        public event Action<ISplineNode> OnNodeRemoved;
         private float selectionTime = 1f;
         private float currentTime = 0;
         private bool isTiming = false;
+        private bool isSelected = false;
+        private uint id;
         #endregion
 
         #region properties
-        private bool isSelected = false;
+        public bool IsSelected { get => isSelected; }
         public Vector3 Position { get => transform.position; }
-        public Color NodeColor { get => nodeData != null ? nodeData.NodeColor : Color.blue; }
-        public float Radius { get => nodeData != null ? nodeData.Radius : .5f; }
-        public bool ShouldDraw { get => nodeData != null ? nodeData.ShouldDraw : true; }
-        public float VerticalOffset { get => nodeData != null ? nodeData.VerticalOffset : 0; }
+
+        public uint ID => id;
+
+        public NodeData NodeData => nodeData;
+
+        public Transform Transform => transform;
+
+        public PatrolController PatrolController { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         #endregion
 
         #region overrides
         public static bool operator true(PatrolPoint p) => p != null;
 
         public static bool operator false(PatrolPoint p) => p == null;
+
         #endregion
 
         #region unity methods
@@ -50,13 +57,13 @@ namespace WorldG.Patrol
         {
             if (copyData.wasSelected)
             {
-                copyData.point.OnNodeAdded?.Invoke(copyData.point, this);
+                //copyData.point.OnNodeAdded?.Invoke(copyData.point, this);
             }
         }
 
         private void OnDisable()
         {
-            OnNodeRemoved?.Invoke(this);
+            //OnNodeRemoved?.Invoke(this);
         }
 
         private void Update()
@@ -88,8 +95,8 @@ namespace WorldG.Patrol
         //[DrawGizmo(GizmoType.Pickable & GizmoType.Selected)]
         private void OnDrawGizmos()
         {
-            Gizmos.color = NodeColor;
-            Gizmos.DrawSphere(transform.position + Vector3.up * (float)VerticalOffset, (float)Radius);
+            Gizmos.color = nodeData.NodeColor;
+            Gizmos.DrawSphere(transform.position + Vector3.up * (float)nodeData.VerticalOffset, (float)nodeData.Radius);
         }
 
         private void OnDrawGizmosSelected()
@@ -102,8 +109,7 @@ namespace WorldG.Patrol
         #region private methods
         private void Select()
         {
-            copyData.point = this;
-            copyData.wasSelected = true;
+            //copyData = new CopyData(true, this);
         }
 
         private void Deselect()
@@ -113,7 +119,12 @@ namespace WorldG.Patrol
             copyData.point = null;
             copyData.wasSelected = false;
             isTiming = false;
-        } 
+        }
+
+        public void SetNodeData(NodeData nodeData)
+        {
+            throw new NotImplementedException();
+        }
         #endregion
     } 
 }

@@ -44,10 +44,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a94df053e5378b4aaa8b7ea4c80937c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prefab: {fileID: 0}
-  verticalOffset: 1
-  nodeRadius: 0.5
-  nodeColor: {r: 0, g: 0, b: 1, a: 1}
+  prefab: {fileID: 6700771872936961024, guid: 24e47e6a397860e458b244778424861d, type: 3}
+  nodeData:
+    nodeColor: {r: 0.07589887, g: 0.16850807, b: 0.7735849, a: 1}
+    radious: 0.5
+    shouldDraw: 1
+    verticalOffset: 1
   shouldDraw: 1
   cyclicType: 0
   nodesCount: 0

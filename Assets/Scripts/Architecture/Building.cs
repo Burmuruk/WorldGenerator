@@ -98,7 +98,6 @@ namespace WorldG.Control
 
         public void DoubleClick()
         {
-            print("Double");
             if (IsWorking || TotalMinions <= 0) return;
             _isWorking = true;
 
@@ -113,6 +112,7 @@ namespace WorldG.Control
             var nextPos = _levelGenerator.GetOffset(_levelGenerator.MovePosition(pos, 2));
 
             var character = _levelGenerator.SetCharacter(nextPos, type);
+            character.Prefab.transform.parent = transform;
 
             minions.Add(character.Prefab.gameObject.GetComponent<Minion>());
         }

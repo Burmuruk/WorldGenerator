@@ -67,14 +67,12 @@ namespace WorldG.level
                     ref var nextPiece = ref pieces[nextPos.x, nextPos.y];
                     if (nextPiece.Type != SideType.Water && !nextPiece.Topping.Prefab)
                     {
-                        //PieceData.ChangeType(cur, )
-                        //PieceData.ChangeColor(cur, SideType.Mudd);
+                        PieceData.ChangeColor(cur, SideType.Mudd);
                         SetTopping(ref cur, ToppingType.House, 2);
 
                         var newDir = MovePosition(new(randX, randY), 2);
                         var newPos = GetOffset(newDir);
-                        SetCharacter(newPos, CharacterType.Knight, 2);
-                        //SetTopping(ref cur, ToppingType.);
+                        //SetCharacter(newPos, CharacterType.Knight, 2);
 
                         ref var newPiece = ref pieces[newDir.x, newDir.y];
                         RepleacePiece(ref newPiece, TileType.Road, (5, SideType.Road));

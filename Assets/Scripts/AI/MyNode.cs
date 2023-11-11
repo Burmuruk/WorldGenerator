@@ -48,6 +48,9 @@ namespace WorldG.Patrol
         private bool isSelected = false;
         private PatrolController patrol;
 
+        public event Action<MyNode, MyNode> OnNodeAdded;
+        public event Action<MyNode> OnNodeRemoved;
+
         public uint ID => idx;
         public Transform Transform { get => transform; }
         public List<NodeConnection> NodeConnections { get => nodeConnections; }
@@ -60,7 +63,12 @@ namespace WorldG.Patrol
         #region Unity methods
         private void Start()
         {
-            OnStart?.Invoke();
+            
+        }
+
+        private void OnEnable()
+        {
+            //OnNodeAdded?.Invoke();
         }
 
         private void OnDrawGizmosSelected()
@@ -70,6 +78,15 @@ namespace WorldG.Patrol
                 if (item.connectionType == ConnectionType.BIDIMENSIONAL)
                     Debug.DrawRay(transform.position, item.node.Position - transform.position, Color.blue);
             }
+
+            if (nodeData.ShouldDraw)
+            {
+                Gizmos.color = nodeData.NodeColor;
+                Gizmos.DrawSphere(transform.position + Vector3.up * (float)nodeData.VerticalOffset, (float)nodeData.Radius); 
+            }
+
+            Select();
+            isSelected = true;
         }
         #endregion
 
@@ -85,5 +102,15 @@ namespace WorldG.Patrol
         }
 
         public void SetIndex(uint idx) => this.idx = idx;
+
+        public void SetNodeData(NodeData nodeData)
+        {
+            this.nodeData = new NodeData(nodeData);
+        }
+
+        private void Select()
+        {
+            copyData = new CopyData(true, this);
+        }
     }
 }

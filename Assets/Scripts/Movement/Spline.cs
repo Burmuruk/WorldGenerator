@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
@@ -11,30 +12,30 @@ namespace WorldG.Patrol
         #region variables
         [Header("Nodes")]
         [SerializeField] GameObject prefab;
-        [SerializeField] public float verticalOffset = 1;
-        [SerializeField] public float nodeRadius = .5f;
-        [SerializeField] public Color nodeColor = Color.blue;
+        [SerializeField] NodeData nodeData;
+        //[SerializeField] public float verticalOffset = 1;
+        //[SerializeField] public float nodeRadius = .5f;
+        //[SerializeField] public Color nodeColor = Color.blue;
         [Header("Spline")]
         public bool shouldDraw = true;
         [SerializeField] public CyclicType cyclicType = CyclicType.None;
         [SerializeField, ReadOnly] int nodesCount = 0;
         [SerializeField] Color lineColor = Color.yellow;
 
-        public PatrolPath path { get; private set; }
-        NodeData nodeData;
+        public PatrolPath<MyNode> path { get; private set; }
         private bool isDisable = false;
         #endregion
 
         #region Unity methods
         private void Awake()
         {
-            nodeData = new NodeData(this);
+            nodeData = new NodeData(nodeData);
         }
 
         private void OnEnable()
         {
             //if (!isDisable) return;
-            
+
             //Initialize();
         }
 
@@ -46,7 +47,7 @@ namespace WorldG.Patrol
             while (point.Next != null)
             {
                 UnsubscribeTo_Node(point.Value);
-                print(point.Value.transform.name);
+                print(point.Value.Transform.name);
             }
         }
 
@@ -64,18 +65,18 @@ namespace WorldG.Patrol
             //List<int> hello;
             if (!shouldDraw) return;
 
-            LinkedListNode<PatrolPoint> node = path.FirstNode;
+            LinkedListNode<MyNode> node = path.FirstNode;
 
             for (int i = 0; i < path.Count; i++)
             {
-                var cur = node.Value.Position + Vector3.up * verticalOffset;
+                var cur = node.Value.Position + Vector3.up * nodeData.VerticalOffset;
 
                 if (cyclicType == CyclicType.Circle && node.Value == path.Last)
-                    Debug.DrawLine(cur, path.First.Position + Vector3.up * verticalOffset, lineColor);
+                    Debug.DrawLine(cur, path.First.Position + Vector3.up * nodeData.VerticalOffset, lineColor);
                 else if (node.Value == path.Last)
                     break;
                 else
-                    Debug.DrawLine(cur, node.Next.Value.Position + Vector3.up * verticalOffset, lineColor);
+                    Debug.DrawLine(cur, node.Next.Value.Position + Vector3.up * nodeData.VerticalOffset, lineColor);
 
                 node = node.Next;
             }
@@ -87,7 +88,7 @@ namespace WorldG.Patrol
         {
             if (path != null && path.Count < 0)
             {
-                Set_NodeSettings(transform.GetComponentsInChildren<PatrolPoint>());
+                Set_NodeSettings(transform.GetComponentsInChildren<MyNode>());
                 return;
             }
 
@@ -103,16 +104,16 @@ namespace WorldG.Patrol
         #region private methods
         private void Get_StartPoints()
         {
-            var points = transform.GetComponentsInChildren<PatrolPoint>();
+            var points = transform.GetComponentsInChildren<MyNode>();
 
             SubscribeTo_Node(points);
             Set_NodeSettings(points);
 
-            path = new PatrolPath(cyclicType, points: points);
+            path = new PatrolPath<MyNode>(cyclicType, points: points);
             nodesCount = path.Count;
         }
 
-        private void SubscribeTo_Node(params PatrolPoint[] points)
+        private void SubscribeTo_Node(params MyNode[] points)
         {
             foreach (var point in points)
             {
@@ -121,14 +122,14 @@ namespace WorldG.Patrol
             }
         }
 
-        private void UnsubscribeTo_Node(PatrolPoint point)
+        private void UnsubscribeTo_Node(MyNode point)
         {
-            if (!point) return;
+            if (point == null) return;
 
-            point.OnNodeAdded -= AddNode;
+            point.OnNodeAdded -= (a, b) => AddNode((MyNode)a, (MyNode)b);
         }
 
-        private void AddNode(PatrolPoint current, PatrolPoint newPoint)
+        private void AddNode(MyNode current, MyNode newPoint)
         {
             if (current == path.Last)
             {
@@ -139,7 +140,7 @@ namespace WorldG.Patrol
                 var prev = path.Prev(current);
                 var next = path.Next(current);
 
-                if (!prev)
+                if (prev == null)
                     path.AddAfter(current, newPoint);
 
                 var prevDirection = prev.Position - current.Position;
@@ -158,33 +159,40 @@ namespace WorldG.Patrol
             SubscribeTo_Node(newPoint);
         }
 
-        private void Set_NodeSettings(params PatrolPoint[] points)
+        private void Set_NodeSettings(params MyNode[] points)
         {
             foreach (var point in points)
             {
-                point.nodeData = nodeData;
+                point.SetNodeData(nodeData);
             }
-        } 
+        }
         #endregion
     }
 
+    [Serializable]
     public class NodeData
     {
-        private Spline spline;
+        [SerializeField] private Color nodeColor = Color.blue;
+        [SerializeField] private float radious = .5f;
+        [SerializeField] private bool shouldDraw = true;
+        [SerializeField] private float verticalOffset = 1;
 
-        public NodeData(Spline spline)
+        public Color NodeColor { get => nodeColor; }
+        public float Radius { get => radious; }
+        public bool ShouldDraw { get => shouldDraw; }
+        public float VerticalOffset { get => verticalOffset; }
+
+        public NodeData(NodeData data)
         {
-            this.spline = spline;
+            (nodeColor, radious, shouldDraw, verticalOffset) = data;
         }
 
-        private Color nodeColor = Color.blue;
-        private float radius = .5f;
-        private bool shouldDraw = true;
-        private float verticalOffset = 1;
-
-        public Color NodeColor { get => spline.nodeColor; }
-        public float Radius { get => spline.nodeRadius; }
-        public bool ShouldDraw { get => spline.shouldDraw; }
-        public float VerticalOffset { get => spline.verticalOffset; }
+        public void Deconstruct(out Color color, out float radious, out bool shouldDraw, out float vOffset)
+        {
+            color = nodeColor;
+            radious = this.radious;
+            shouldDraw = this.shouldDraw;
+            vOffset = this.verticalOffset;
+        }
     }
 }

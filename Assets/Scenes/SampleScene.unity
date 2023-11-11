@@ -4088,7 +4088,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 429fbb77a5877784db24d0170b2c0af9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _clickGap: 500
+  _clickGap: 150
 --- !u!4 &937776274
 Transform:
   m_ObjectHideFlags: 0

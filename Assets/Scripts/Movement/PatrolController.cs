@@ -10,7 +10,7 @@ namespace WorldG.Patrol
     public class PatrolController : MonoBehaviour
     {
         #region Variables
-        [SerializeField] Spline spline;
+        [SerializeField] Spline splinePrefab;
         [SerializeField] CyclicType cyclicType = CyclicType.None;
         //[SerializeField] PathFinder<AStar> pathFinder;
         INodeListSupplier nodeList;
@@ -19,6 +19,9 @@ namespace WorldG.Patrol
         [SerializeField] List<Task> tasks = new List<Task>();
         Movement mover;
         PathFinder finder;
+        Spline spline;
+
+        public event Action OnFinished;
 
         public enum TaskType
         {
@@ -38,7 +41,7 @@ namespace WorldG.Patrol
         Dictionary<TaskType, Action> actionsList = null;
         List<Action> tasksList = new List<Action>();
 
-        int currentAction = 0;
+        int currentAction = -1;
         Transform currentPoint = default;
         Transform nextPoint = default;
         object taskValue = default;
@@ -52,6 +55,8 @@ namespace WorldG.Patrol
         {
             get
             {
+                if (!spline && spline.path == null) return default;
+
                 enumerator??= spline.path.GetEnumerator();
 
                 //if (innerController != null)
@@ -89,7 +94,10 @@ namespace WorldG.Patrol
                 actionsList = new Dictionary<TaskType, Action>()
                 {
                     { TaskType.Turn, () => mover.TurnTo((float)taskValue) },
-                    { TaskType.Move, () => { var n = NextPoint; shouldRepeat = n; mover.MoveTo(n); } },
+                    { TaskType.Move, () => { 
+                        Transform p = NextPoint;
+                        if (p == null) { RestartTasks(); return;}
+                        mover.MoveTo(p); } },
                     { TaskType.Wait, () => Invoke("Execute_Tasks", (float)taskValue)}
                 };
         }
@@ -131,17 +139,18 @@ namespace WorldG.Patrol
             this.finder = new PathFinder(nodeList);
         }
 
-        public void CreatePatrolWithSpline<T>(Vector3 start, Vector3 end) where T : IPathFinder, new()
+        public void CreatePatrolWithSpline<T>(Vector3 start, Vector3 end, CyclicType cyclicType) where T : IPathFinder, new()
         {
+            this.cyclicType = cyclicType;
             finder.OnPathCalculated += () =>
             {
                 var route = finder.BestRoute;
                 print("Total nodes!! =>  " + route?.Count);
+                enumerator?.Dispose();
+                enumerator = null;
                 CreateSpline();
             };
             finder.Find_BestRoute<T>((start, end));
-            
-            //gameObject.AddComponent<Spline>();
         }
 
         private void CreateSpline()
@@ -155,10 +164,8 @@ namespace WorldG.Patrol
                     break;
                 }
 
-            var splineGO = Instantiate(this.spline, transform.parent.transform);
+            var splineGO = Instantiate(splinePrefab, transform.parent.transform);
             var spline = splineGO.GetComponent<Spline>();
-
-            spline.cyclicType = cyclicType;
 
             for (int i = 0; i < route.Length; i++)
             {
@@ -167,21 +174,20 @@ namespace WorldG.Patrol
                 go.transform.position = route[i].Position;
             }
 
+            if (this.spline) Destroy(this.spline.gameObject);
             this.spline = spline;
+            spline.cyclicType = cyclicType;
             Initialize();
-            Execute_Tasks();
+
+            OnFinished?.Invoke();
+            //Execute_Tasks();
         }
 
         public void Initialize()
         {
-            if (spline)
-            {
-                spline.cyclicType = cyclicType;
-                spline.Initialize();
-            }
-            else
-                return;
+            spline.Initialize();
 
+            tasksList = new();
             foreach (var task in tasks)
             {
                 tasksList.Add(actionsList[task.type]);
@@ -190,18 +196,26 @@ namespace WorldG.Patrol
 
         public void Execute_Tasks()
         {
+            currentAction++;
             if (currentAction < tasksList.Count && tasksList != null)
             {
                 taskValue = tasks[currentAction].value;
-                //print(currentAction);
-                tasksList[currentAction++].Invoke();
+                tasksList[currentAction].Invoke();
             }
             else if (shouldRepeat && tasksList != null && currentAction >= tasksList.Count)
             {
-                currentAction = 0;
+                currentAction = -1;
                 Execute_Tasks();
             }
+            else Debug.Log("Bye");
+            //else OnFinished?.Invoke();
         } 
+
+        private void RestartTasks()
+        {
+            currentAction = -1;
+            enumerator.Reset();
+        }
         #endregion
     }
 }

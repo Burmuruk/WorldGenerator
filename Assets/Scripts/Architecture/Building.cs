@@ -24,15 +24,12 @@ namespace WorldG.Control
         Action onDie;
 
         public bool IsWorking { get => _isWorking; }
-
         public float Health => throw new NotImplementedException();
         public Action OnDie { get => onDie; set => onDie += value; }
         public int TotalMinions { get => minions.Count; }
         public int ID { get => id; }
         public List<Minion> Minions { get => minions; }
-
         public bool IsSelected => isSelected;
-
         public Action OnDeselection { get => onDeselection; set => onDeselection += value; }
 
         private void Awake()
@@ -111,7 +108,7 @@ namespace WorldG.Control
             var pos = _levelGenerator.RemoveOffset(transform.position);
             var nextPos = _levelGenerator.GetOffset(_levelGenerator.MovePosition(pos, 2));
 
-            var character = _levelGenerator.SetCharacter(nextPos, type);
+            var character = _levelGenerator.SetCharacter(nextPos, type, 2);
             character.Prefab.transform.parent = transform;
 
             minions.Add(character.Prefab.gameObject.GetComponent<Minion>());
@@ -122,7 +119,6 @@ namespace WorldG.Control
             var pos = transform.position + new Vector3(2, 2 , 1);
             _minionPopUpMenu.SetPlace(pos, CreateMinion, id, products);
             //buttons.transform.gameObject.SetActive(!buttons.activeSelf);
-
         }
 
         private void Die()
@@ -144,7 +140,6 @@ namespace WorldG.Control
 
         public void Select()
         {
-            
             isSelected = true;
         }
 

@@ -21,6 +21,8 @@ namespace WorldG.Control
         private void Awake()
         {
             _patrolController = gameObject.GetComponent<PatrolController>();
+            _patrolController.OnFinished += () => _isWorking = true;
+            _patrolController.OnFinished += _patrolController.Execute_Tasks;
             movement = GetComponent<Movement>();
         }
 
@@ -44,11 +46,6 @@ namespace WorldG.Control
 
         public void SetTask(Action<object> task, object args) => task?.Invoke(args);
 
-        public void SetDestiny(Vector3 target)
-        {
-            //Set target and start      A*      Connections
-        }
-
         public virtual void SetWork(object args) { }
 
         public void Move(object destiny)
@@ -56,16 +53,13 @@ namespace WorldG.Control
             Vector3 target = (Vector3)destiny;
             Debug.DrawRay(target, Vector3.up * 10, Color.white, 10);
 
-
-            print("Moving");
-            _patrolController.CreatePatrolWithSpline<AStar>(transform.position, target);
-            
+            _patrolController.CreatePatrolWithSpline<AStar>(transform.position, target, CyclicType.None);
+            _isWorking = true;
         }
 
         public void SetConnections(INodeListSupplier nodeList)
         {
             _patrolController.SetNodeList(nodeList, CyclicType.None);
-            //_patrolController.Initialize();
         }
     }
 

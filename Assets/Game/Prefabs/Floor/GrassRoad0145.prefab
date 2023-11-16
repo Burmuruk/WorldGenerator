@@ -94,6 +94,25 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1112f08efc0230142b82c4c01c94840f, type: 3}
+--- !u!1 &8093089021152329179 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 1112f08efc0230142b82c4c01c94840f, type: 3}
+  m_PrefabInstance: {fileID: 8975960222789582986}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &7381466836077522416
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8093089021152329179}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 36111426027873436, guid: 1112f08efc0230142b82c4c01c94840f, type: 3}
 --- !u!4 &8870891945356273505 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 1112f08efc0230142b82c4c01c94840f, type: 3}
@@ -156,6 +175,25 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d7b711f7ac1a8b84aa1acd24a11472de, type: 3}
+--- !u!1 &8093089019674708192 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d7b711f7ac1a8b84aa1acd24a11472de, type: 3}
+  m_PrefabInstance: {fileID: 8975960224533738929}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &5807328809581017391
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8093089019674708192}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -4509705371314641144, guid: d7b711f7ac1a8b84aa1acd24a11472de, type: 3}
 --- !u!4 &8870891943612322394 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d7b711f7ac1a8b84aa1acd24a11472de, type: 3}

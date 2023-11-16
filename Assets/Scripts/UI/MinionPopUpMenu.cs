@@ -1,8 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class MinionPopUpMenu : MonoBehaviour
@@ -11,7 +10,6 @@ public class MinionPopUpMenu : MonoBehaviour
     [SerializeField] GameObject panel;
     [SerializeField] Button[] buttons;
     private int curId = -1;
-    Action action;
 
     [Serializable]
     public struct CharImage
@@ -20,7 +18,6 @@ public class MinionPopUpMenu : MonoBehaviour
         public CharacterType characterType;
     }
 
-    // Start is called before the first frame update
     void Start()
     {
         buttons = new Button[panel.transform.childCount];
@@ -29,12 +26,6 @@ public class MinionPopUpMenu : MonoBehaviour
         {
             buttons[i] = panel.transform.GetChild(i).GetComponent<Button>();
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     public void SetPlace(Vector3 position, Action<CharacterType> callBack, in int id, params CharacterType[] characters)
@@ -62,18 +53,14 @@ public class MinionPopUpMenu : MonoBehaviour
                 {
                     buttons[i].gameObject.GetComponent<Image>().sprite = characterImage[j].image;
                     buttons[i].gameObject.SetActive(true);
+
                     int idx = i;
+                    UnityAction action = null;
                     action += () => callBack(characters[idx]);
+                    buttons[i].onClick.AddListener(action);
                 }
             }
         }
-
-
-    }
-
-    public void RunCallBack()
-    {
-        action?.Invoke();
     }
 
     private void HideButtons()

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ namespace WorldG.Patrol
         Backwards
     }
 
-    public class PatrolPath<T> : ICollection<T> where T : ISplineNode
+    public class PatrolPath<T> : ICollection<T>, IDisposable where T : ISplineNode
     {
         #region Variables
         [SerializeField] LinkedList<T> points = new LinkedList<T>();
@@ -20,20 +21,20 @@ namespace WorldG.Patrol
 
         private CyclicType cyclicType = CyclicType.None;
 
-        class Enumerator : IEnumerator<T>
+        class PatrolEnumerator : IEnumerator<T>
         {
-            PatrolPath<T> collection;
+            LinkedList<T> collection;
             int currentIndex = -1;
             CyclicType cyclicType = CyclicType.None;
             LinkedListNode<T> current;
             bool goingRight = true;
 
-            public Enumerator(PatrolPath<T> collection)
+            public PatrolEnumerator(LinkedList<T> list, CyclicType cyclicType)
             {
-                this.collection = collection;
-                this.cyclicType = collection.cyclicType;
-                current = collection.FirstNode;
-                goingRight = true;
+                this.collection = list;
+                this.cyclicType = cyclicType;
+                current = list.First;
+                this.goingRight = true;
             }
 
             public object Current
@@ -45,6 +46,9 @@ namespace WorldG.Patrol
 
             public void Dispose()
             {
+                collection.Clear();
+                collection = null;
+                current = null;
                 return;
             }
 
@@ -57,12 +61,12 @@ namespace WorldG.Patrol
                         if (currentIndex == -1)
                         {
                             currentIndex++;
-                            current = collection.FirstNode;
+                            current = collection.First;
                         }
                         else if (currentIndex >= collection.Count - 1)
                         {
                             currentIndex = 0;
-                            current = collection.FirstNode;
+                            current = collection.First;
                         }
                         else
                         {
@@ -75,7 +79,7 @@ namespace WorldG.Patrol
                         if (currentIndex <= 0)
                         {
                             currentIndex = collection.Count - 1;
-                            current = collection.LastNode;
+                            current = collection.Last;
                         }
                         else
                         {
@@ -91,7 +95,7 @@ namespace WorldG.Patrol
                         if (currentIndex == -1)
                         {
                             currentIndex++;
-                            current = collection.FirstNode;
+                            current = collection.First;
                         }
                         else if (currentIndex >= collection.Count - 1)
                         {
@@ -127,7 +131,7 @@ namespace WorldG.Patrol
                         if (currentIndex == -1)
                         {
                             currentIndex++;
-                            current = collection.FirstNode;
+                            current = collection.First;
                         }
                         else if (currentIndex >= collection.Count - 1)
                             return false;
@@ -157,13 +161,14 @@ namespace WorldG.Patrol
             public void Reset()
             {
                 currentIndex = -1;
+                current = collection.First;
             }
         }
         #endregion
 
         #region Properties
-        public int Count => ((ICollection<T>)points).Count;
-        public bool IsReadOnly => ((ICollection<T>)points).IsReadOnly;
+        public int Count => points.Count;
+        public bool IsReadOnly { get; }
         public T Last { get => points.Last.Value; }
         public T First { get => points.First.Value; }
         public LinkedListNode<T> FirstNode { get => points.First; }
@@ -177,6 +182,9 @@ namespace WorldG.Patrol
 
         public PatrolPath(CyclicType cyclicType = CyclicType.None, params T[] points)
         {
+            IsReadOnly = false;
+            this.points = new();
+
             foreach (var point in points)
             {
                 Add(point);
@@ -185,49 +193,50 @@ namespace WorldG.Patrol
             this.cyclicType = cyclicType;
         }
 
-        public void Initialize(CyclicType cyclicType = CyclicType.None, params T[] points)
-        {
-            foreach (var point in points)
-            {
-                Add(point);
-            }
+        //public void Initialize(CyclicType cyclicType = CyclicType.None, params T[] points)
+        //{
+        //    foreach (var point in points)
+        //    {
+        //        Add(point);
+        //    }
 
-            this.cyclicType = cyclicType;
-        }
+        //    this.cyclicType = cyclicType;
+        //}
 
         #region Public methods
         public IEnumerator<T> GetEnumerator()
         {
-            using (var enumerator = new Enumerator(this))
-            {
-                while (enumerator.MoveNext())
-                {
-                    yield return (T)enumerator.Current;
-                }
-            }
+            //using (var enumerator = new Enumerator(points, cyclicType))
+            //{
+            //    while (enumerator.MoveNext())
+            //    {
+            //        yield return (T)enumerator.Current;
+            //    }
+            //}
+            return new PatrolEnumerator(points, cyclicType);
         }
 
         //{
 
         //    return new Enumerator<T>(this);
-            //foreach (var hi in points)
-            //{
-            //    yield return hi;
-            //}
+        //foreach (var hi in points)
+        //{
+        //    yield return hi;
+        //}
 
-            //using(var enumerator = GetEnumerator())
-            //{
-            //    enumerator.MoveNext();
-            //    while (true)
-            //    {
-            //        yield return enumerator.Current;
+        //using(var enumerator = GetEnumerator())
+        //{
+        //    enumerator.MoveNext();
+        //    while (true)
+        //    {
+        //        yield return enumerator.Current;
 
-            //        if (!enumerator.MoveNext())
-            //            enumerator.Reset();
-            //    }
-            //}
+        //        if (!enumerator.MoveNext())
+        //            enumerator.Reset();
+        //    }
+        //}
 
-            //return ((IEnumerable<T>)points).GetEnumerator();
+        //return ((IEnumerable<T>)points).GetEnumerator();
         //}
 
         public void Add(T item)
@@ -235,13 +244,13 @@ namespace WorldG.Patrol
             points.AddLast(item);
         }
 
-        public bool AddAfter(T node, T item)
+        public bool AddAfter(T node, T newNode)
         {
             var point = points.Find(node);
 
             if (point == null) return false;
 
-            points.AddAfter(point, item);
+            points.AddAfter(point, newNode);
 
             return true;
         }
@@ -296,12 +305,24 @@ namespace WorldG.Patrol
                 lastSearched = points.Find(item);
 
             return lastSearched.Previous.Value;
-        } 
+        }
         #endregion
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IEnumerable)points).GetEnumerator();
+            throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            points.Clear();
+            lastSearched = null;
+        }
+
+        ~PatrolPath()
+        {
+            Dispose();
+            Debug.Log("End Patrol Path");
         }
     }
 }

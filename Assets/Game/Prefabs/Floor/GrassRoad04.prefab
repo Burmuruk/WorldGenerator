@@ -94,6 +94,25 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 90a26adef1706e1479e56195038f854c, type: 3}
+--- !u!1 &4993952699649545281 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 90a26adef1706e1479e56195038f854c, type: 3}
+  m_PrefabInstance: {fileID: 5300591989001808144}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &4389972989279875294
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4993952699649545281}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -1558202967092632843, guid: 90a26adef1706e1479e56195038f854c, type: 3}
 --- !u!4 &5622116493837111035 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 90a26adef1706e1479e56195038f854c, type: 3}
@@ -164,6 +183,25 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eff02692c57b0dc4f9074edb210e701e, type: 3}
+--- !u!1 &4993952698367052027 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: eff02692c57b0dc4f9074edb210e701e, type: 3}
+  m_PrefabInstance: {fileID: 5300591990000891306}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &3946439757397516268
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4993952698367052027}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 8882698434947338288, guid: eff02692c57b0dc4f9074edb210e701e, type: 3}
 --- !u!4 &5622116492846158401 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: eff02692c57b0dc4f9074edb210e701e, type: 3}

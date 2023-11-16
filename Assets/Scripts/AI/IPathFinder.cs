@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
+﻿using System.Collections.Generic;
 using WorldG.Patrol;
 
 namespace Coco.AI.PathFinding
 {
-	public interface IPathFinder
+    public interface IPathFinder
 	{
         LinkedList<IPathNode> Get_Route(IPathNode start, IPathNode end, out float distance);
 

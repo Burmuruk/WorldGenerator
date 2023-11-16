@@ -13,17 +13,18 @@ namespace WorldG.Patrol
         [Header("Nodes")]
         [SerializeField] GameObject prefab;
         [SerializeField] NodeData nodeData;
-        //[SerializeField] public float verticalOffset = 1;
-        //[SerializeField] public float nodeRadius = .5f;
-        //[SerializeField] public Color nodeColor = Color.blue;
+        [SerializeField] bool findOnStart = false;
         [Header("Spline")]
         public bool shouldDraw = true;
         [SerializeField] public CyclicType cyclicType = CyclicType.None;
         [SerializeField, ReadOnly] int nodesCount = 0;
         [SerializeField] Color lineColor = Color.yellow;
 
+        bool initialized = false;
+        bool isAlive = true;
+
         public PatrolPath<MyNode> path { get; private set; }
-        private bool isDisable = false;
+        private bool isAdded = true;
         #endregion
 
         #region Unity methods
@@ -32,11 +33,24 @@ namespace WorldG.Patrol
             nodeData = new NodeData(nodeData);
         }
 
+        private void Start()
+        {
+            if (!findOnStart) return;
+
+            Initialize();
+        }
+
         private void OnEnable()
         {
-            //if (!isDisable) return;
+            if (path == null || path.Count <= 0) return;
 
-            //Initialize();
+            var point = path.FirstNode;
+            for (int i = 0; i < path.Count; i++)
+            {
+                point.Value.OnNodeAdded += (a, b) => AddNode(a, b);
+                point.Value.OnNodeRemoved += (rPoint) => path.Remove(rPoint);
+                Set_NodeSettings(point.Value);
+            }
         }
 
         private void OnDisable()
@@ -44,20 +58,29 @@ namespace WorldG.Patrol
             if (path == null || path.Count <= 0) return;
 
             var point = path.FirstNode;
-            while (point.Next != null)
+            for (int i = 0; i < path.Count; i++)
             {
-                UnsubscribeTo_Node(point.Value);
-                print(point.Value.Transform.name);
+                point.Value.OnNodeAdded -= (a, b) => AddNode(a, b);
+                point.Value.OnNodeRemoved -= (rPoint) => path.Remove(rPoint);
             }
+        }
+
+        private void OnDestroy()
+        {
+            isAlive = false;
         }
 
         [DrawGizmo(GizmoType.InSelectionHierarchy)]
         private void OnDrawGizmos()
         {
+            if (!isAlive) return;
+
             if (path != null)
                 nodesCount = path.Count;
             else
                 nodesCount = 0;
+
+            if (!initialized) Initialize();
 
             if (path == null || path.Count <= 1)
                 return;
@@ -86,48 +109,16 @@ namespace WorldG.Patrol
         #region public methods
         public void Initialize()
         {
-            if (path != null && path.Count < 0)
-            {
-                Set_NodeSettings(transform.GetComponentsInChildren<MyNode>());
-                return;
-            }
-
-            Get_StartPoints();
-        }
-
-        public void Initialize(List<ISplineNode> points)
-        {
-
-        }
-        #endregion
-
-        #region private methods
-        private void Get_StartPoints()
-        {
             var points = transform.GetComponentsInChildren<MyNode>();
-
-            SubscribeTo_Node(points);
             Set_NodeSettings(points);
 
             path = new PatrolPath<MyNode>(cyclicType, points: points);
             nodesCount = path.Count;
+            initialized = true;
         }
+        #endregion
 
-        private void SubscribeTo_Node(params MyNode[] points)
-        {
-            foreach (var point in points)
-            {
-                point.OnNodeAdded += AddNode;
-                point.OnNodeRemoved += (rPoint) => path.Remove(rPoint);
-            }
-        }
-
-        private void UnsubscribeTo_Node(MyNode point)
-        {
-            if (point == null) return;
-
-            point.OnNodeAdded -= (a, b) => AddNode((MyNode)a, (MyNode)b);
-        }
+        #region private methods
 
         private void AddNode(MyNode current, MyNode newPoint)
         {
@@ -156,7 +147,6 @@ namespace WorldG.Patrol
             }
 
             Set_NodeSettings(newPoint);
-            SubscribeTo_Node(newPoint);
         }
 
         private void Set_NodeSettings(params MyNode[] points)
@@ -164,9 +154,17 @@ namespace WorldG.Patrol
             foreach (var point in points)
             {
                 point.SetNodeData(nodeData);
+                point.OnNodeAdded += AddNode;
+                point.OnNodeRemoved += (rPoint) => path.Remove(rPoint);
             }
         }
         #endregion
+
+        ~Spline()
+        {
+            if (path) path.Dispose();
+            Debug.Log("Bye Bye Spline chan");
+        }
     }
 
     [Serializable]

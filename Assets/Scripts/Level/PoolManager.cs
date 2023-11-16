@@ -7,12 +7,41 @@ namespace WorldG.level
 {
     public class PoolManager : MonoBehaviour
     {
+        [SerializeField] Transform goLevel;
         [SerializeField] PieceCollection pieceCollection;
 
         private Dictionary<TileType, LinkedList<Piece>> _piecesPool = new();
         private Dictionary<ToppingType, LinkedList<Topping>> _toppingsPool = new();
         private Dictionary<CharacterType, LinkedList<Minion>> _charactersPool = new();
         private Dictionary<int, List<Minion>> _minions = new();
+
+        private Transform piecesParent;
+        private Transform toppingsParent;
+        private Transform characterParent;
+
+        private void Awake()
+        {
+            piecesParent = goLevel.transform.Find("Floor");
+            if (piecesParent == null)
+            {
+                var newPar = new GameObject("Floor");
+                newPar.transform.parent = goLevel.transform;
+            }
+
+            toppingsParent = goLevel.transform.Find("Toppings");
+            if (toppingsParent == null)
+            {
+                var newPar = new GameObject("Toppings");
+                newPar.transform.parent = goLevel.transform;
+            }
+
+            characterParent = goLevel.transform.Find("Toppings");
+            if (characterParent == null)
+            {
+                var newPar = new GameObject("Toppings");
+                newPar.transform.parent = goLevel.transform;
+            }
+        }
 
         public Dictionary<CharacterType, LinkedList<Minion>> Minions { get => _charactersPool; }
         
@@ -46,7 +75,7 @@ namespace WorldG.level
             }
 
             var newPiece = pieceCollection.GetPiece(tileType);
-            piece.Prefab = Instantiate(newPiece.Prefab, newPiece.Prefab.transform.position, Quaternion.identity, transform);
+            piece.Prefab = Instantiate(newPiece.Prefab, newPiece.Prefab.transform.position, Quaternion.identity, piecesParent);
 
             newPiece.Prefab = piece.Prefab;
 
@@ -85,7 +114,7 @@ namespace WorldG.level
             curPiece = pieceCollection.GetPiece(tileType, sides);
             if (curPiece == null) return null;
 
-            curPiece.Prefab = Instantiate(curPiece.Prefab, curPiece.Prefab.transform.position, Quaternion.identity, transform);
+            curPiece.Prefab = Instantiate(curPiece.Prefab, curPiece.Prefab.transform.position, Quaternion.identity, piecesParent);
 
             var (go, ttype, sType, sTypes, mats, rot, comp, vID) = curPiece;
             var copy = new Piece(go, ttype, sType, sTypes, mats, rot, comp, vID);
@@ -160,16 +189,16 @@ namespace WorldG.level
             throw new NotImplementedException();
         }
 
-        public void GetTopping(ref Piece piece, ref Topping topp, int version = -1)
+        public void GetTopping(ref Piece piece, ToppingType toppingType, int version = -1)
         {
-            if (_toppingsPool.ContainsKey(topp.Type))
+            if (_toppingsPool.ContainsKey(toppingType))
             {
-                var cur = _toppingsPool[topp.Type].First;
-                for (int i = 0; i < _toppingsPool[topp.Type].Count; i++)
+                var cur = _toppingsPool[toppingType].First;
+                for (int i = 0; i < _toppingsPool[toppingType].Count; i++)
                 {
                     if (!cur.Value.Prefab.activeSelf)
                     {
-                        if (version >= 0 ? cur.Value.Version == topp.Version : true)
+                        if (version >= 0 ? cur.Value.Version == version : true)
                         {
                             piece.SetTopping(cur.Value);
                             SetToppingAvailable(ref piece);
@@ -188,11 +217,11 @@ namespace WorldG.level
             if (piece.Topping.Prefab)
                 SetToppingAvailable(ref piece, false);
 
-            if (!_toppingsPool.ContainsKey(topp.Type))
-                _toppingsPool.Add(topp.Type, new());
+            if (!_toppingsPool.ContainsKey(toppingType))
+                _toppingsPool.Add(toppingType, new());
 
-            var topping = pieceCollection.GetTopping(topp.Type);
-            topping.SetPrefab(Instantiate(topping.Prefab, topping.Prefab.transform.position, topping.Prefab.transform.rotation, transform));
+            var topping = pieceCollection.GetTopping(toppingType);
+            topping.SetPrefab(Instantiate(topping.Prefab, topping.Prefab.transform.position, topping.Prefab.transform.rotation, toppingsParent));
 
             var (type, prefab, sides, versionID, haveSpline) = topping;
             var copy = new Topping(type, prefab, sides, versionID, haveSpline);
@@ -259,7 +288,7 @@ namespace WorldG.level
 
             if (characterIns == null)
             {
-                characterIns = Instantiate(character.Prefab, character.Prefab.transform.position, character.Prefab.transform.rotation, transform);
+                characterIns = Instantiate(character.Prefab, character.Prefab.transform.position, character.Prefab.transform.rotation, characterParent);
                 _charactersPool[type].AddLast(characterIns.GetComponent<Minion>());
             }
 

@@ -103,7 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33b0ff04a4fe4524fac3272b5ef1eab7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spline: {fileID: 7164150994812226518, guid: 900d29e74c7a3c64cac133ba1d36f391, type: 3}
+  splinePrefab: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
   cyclicType: 0
   shouldRepeat: 1
   tasks:

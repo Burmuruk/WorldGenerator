@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Timers;
+using Unity.VisualScripting;
 using UnityEngine;
 using WorldG.level;
 
@@ -7,7 +8,10 @@ namespace WorldG.Control
 {
     public class PlayerController : MonoBehaviour
     {
+        #region variables
         [SerializeField] private float _clickGap = .1f;
+        [SerializeField] float zoomSpeed = 3;
+        [SerializeField] float zoomSmooth = 1;
 
         LevelGenerator level;
         private float _lastClick = 0;
@@ -17,7 +21,9 @@ namespace WorldG.Control
         MinionsManager _minionsManager;
         SynchronizationContext _syncContext;
         (int id, int clicks, IClickable clickable) clickedItem = default;
-        (int id, ISelectable) selected;
+        (int id, ISelectable selectable) selected;
+        Vector3 zoomCurSpeed = Vector3.zero;
+        #endregion
 
         private void Awake()
         {
@@ -62,19 +68,22 @@ namespace WorldG.Control
                 {
                     if (hit.collider.gameObject.GetComponent<ISelectable>() is var s && s != null)
                     {
-                        if (s.IsSelected) return;
+                        if (selected.id == hit.colliderInstanceID && s.IsSelected)
+                        {
+                            selected.Item2?.Deselect();
+                            selected = (hit.colliderInstanceID, s);
+                        }
+                        else
+                        {
+                            selected.selectable?.Deselect();
+                            selected = (hit.colliderInstanceID, s);
+                            s.Select();
 
-                        s.Select();
-                        _minionsManager.SetTarget(s, hit.collider.transform.position);
+                            _minionsManager.SetTarget(s, hit.collider.transform.position);
                         
-                        //selectable = s;
-                        //selectable.OnDeselection += () => selectable = null;
-                    }
-
-                    if (selected.id != hit.colliderInstanceID)
-                    {
-                        selected.Item2?.Deselect();
-                        selected = (hit.colliderInstanceID, s);
+                            //selectable = s;
+                            //selectable.OnDeselection += () => selectable = null;
+                        }
                     }
                     else
                     {
@@ -82,6 +91,12 @@ namespace WorldG.Control
                         selected = (hit.colliderInstanceID, s);
                     }
                 }
+            }
+
+            var wheel = Input.mouseScrollDelta.y;
+            if (wheel != 0)
+            {
+                Camera.main.transform.Translate(new Vector3(0, wheel * zoomSpeed * Time.deltaTime, 0), Space.World);
             }
         }
 
@@ -106,7 +121,6 @@ namespace WorldG.Control
                     timer.Dispose();
                 };
             timer.Start();
-
         }
 
         private void SetInitialPointCamera()

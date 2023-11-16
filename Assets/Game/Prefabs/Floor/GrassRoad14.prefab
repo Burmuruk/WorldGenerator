@@ -94,6 +94,25 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b8a5226728a56df43b7ef2569abbd6dd, type: 3}
+--- !u!1 &3545437586727758514 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: b8a5226728a56df43b7ef2569abbd6dd, type: 3}
+  m_PrefabInstance: {fileID: 4463776839822006243}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &538428344715744423
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3545437586727758514}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -8195487929194480528, guid: b8a5226728a56df43b7ef2569abbd6dd, type: 3}
 --- !u!4 &4213183558477000712 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b8a5226728a56df43b7ef2569abbd6dd, type: 3}
@@ -156,6 +175,25 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c93756c28d872e1408bd97d3837de4a7, type: 3}
+--- !u!1 &3545437585553174376 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c93756c28d872e1408bd97d3837de4a7, type: 3}
+  m_PrefabInstance: {fileID: 4463776840661209657}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &9220056474368880674
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3545437585553174376}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 5383435622822652588, guid: c93756c28d872e1408bd97d3837de4a7, type: 3}
 --- !u!4 &4213183557637993938 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c93756c28d872e1408bd97d3837de4a7, type: 3}

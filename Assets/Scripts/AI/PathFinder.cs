@@ -90,7 +90,7 @@ namespace Coco.AI.PathFinding
                 isCalculating = true;
                 task = Task.Run(() => GetAllRoutes(curNodes));
 
-                task.Wait();
+                //task.Wait();
                 var awaiter = task.GetAwaiter();
                 awaiter.OnCompleted(() =>
                 {

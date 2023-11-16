@@ -203,6 +203,7 @@ public struct PieceRelations
 [CreateAssetMenu(fileName = "Persona", menuName = "ScriptableObjects/LevelPiece", order = 2)]
 public class PieceCollection : ScriptableObject
 {
+    #region Variables
     [SerializeField] MaterialData[] materials;
     [SerializeField] Topping[] toppings;
     [SerializeField] ToppingGroup[] toppingGroups;
@@ -214,12 +215,13 @@ public class PieceCollection : ScriptableObject
 
     Dictionary<TileType, List<Piece>> _pieces;
     Dictionary<SideType, Material> _materials;
-    Dictionary< CharacterType, Character> _characters;
+    Dictionary<CharacterType, Character> _characters;
     Dictionary<SideType, Area> _areas;
     Dictionary<ToppingType, List<Topping>> _toppings;
     Dictionary<SideType, Probabilities<ToppingType>> _toppingAreas;
     Dictionary<SideType, Probabilities<SideType>> _pieceProbs;
-    Dictionary<SideType, Probabilities<ToppingType>> _toppingProbs;
+    Dictionary<SideType, Probabilities<ToppingType>> _toppingProbs; 
+    #endregion
 
     public void Initialize()
     {

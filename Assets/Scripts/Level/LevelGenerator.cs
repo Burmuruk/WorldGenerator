@@ -7,6 +7,7 @@ namespace WorldG.level
 {
     public class LevelGenerator : MonoBehaviour
     {
+        #region Variables
         [SerializeField] PieceCollection PieceData;
         [SerializeField] Piece[,] pieces;
         [SerializeField] Vector2Int size = new Vector2Int(10, 10);
@@ -23,7 +24,8 @@ namespace WorldG.level
         new Vector2Int(-1, 0),
         new Vector2Int(-1, -1),
     };
-        private Queue<(Area, Vector2Int)> pendingAreas = new();
+        private Queue<(Area, Vector2Int)> pendingAreas = new(); 
+        #endregion
 
         public Vector3 StartPoint
         {
@@ -46,9 +48,189 @@ namespace WorldG.level
             GetStartPoint();
         }
 
-        private void Update()
+        public Piece GetPieceInfo(Vector3 position)
         {
+            var pos = RemoveOffset(position);
+            return pieces[pos.x, pos.y];
+        }
 
+        public Vector3 GetOffset(Vector2Int cord)
+        {
+            return GetOffset((cord.x, cord.y));
+        }
+
+        public Vector3 GetOffset((float x, float y) cord)
+        {
+            Vector3 curPos = new Vector3(cord.x * 2, 0, cord.y * -1.75f);
+
+            if ((cord.y % 2 != 0))
+                curPos += Vector3.right;
+            return curPos;
+        }
+
+        public Vector2Int RemoveOffset(Vector3 position)
+        {
+            Vector2Int curPos = default;
+
+            int x = (int)(position.x * .5f);
+            int y = (int)((position.z / -1.75f));
+
+            curPos += new Vector2Int(x, y);
+            return curPos;
+        }
+
+        public Vector2Int MovePosition(in Vector2Int cord, int idx)
+        {
+            return new Vector2Int
+            {
+                x = cord.x + ((((cord.y % 2 == 0 && directions[idx].x > 0) || (cord.y % 2 != 0 && directions[idx].x < 0))
+                             && directions[idx].y != 0) ? 0 : directions[idx].x),
+                y = cord.y + directions[idx].y
+            };
+        }
+
+        public void SetRoad(in Vector2Int cord)
+        {
+            ref var cur = ref pieces[cord.x, cord.y];
+
+            if (cur.Topping.Prefab) return;
+            if (cur.Type == SideType.Water) return;
+
+            List<(int idx, SideType side)> connections = new();
+            HexCircleMovement mov = new HexCircleMovement(size, cord, 1);
+            int i = 0;
+
+            foreach (var nextPiece in mov)
+            {
+                if (nextPiece.x < 0 || nextPiece.x >= size.x ||
+                    nextPiece.y < 0 || nextPiece.y >= size.y)
+                {
+                    i++;
+                    continue;
+                }
+
+                ref var neighbour = ref pieces[nextPiece.x, nextPiece.y];
+                if (neighbour.TileType == TileType.Road && neighbour.Entrances.Length > 0 && neighbour[GetOpositeSide(i, neighbour.Types.Length)] != SideType.Road)
+                {
+                    var sides = GetSidesOfConnectedRoad(ref neighbour, in i);
+
+                    RepleacePiece(ref neighbour, TileType.Road, sides);
+                    connections.Add((i, SideType.Road));
+                }
+                i++;
+            }
+
+            if (connections.Count == 0) return;
+
+            RepleacePiece(ref cur, TileType.Road, connections.ToArray());
+            OnRoadAdded?.Invoke();
+        }
+
+        public void SetFinalRoad(in Vector2Int cord)
+        {
+            ref var cur = ref pieces[cord.x, cord.y];
+
+            if (cur.Type == SideType.Water) return;
+
+            List<(int idx, SideType side)> connections = new();
+            HexCircleMovement mov = new HexCircleMovement(size, cord, 1);
+            int i = 0;
+
+            foreach (var nextPiece in mov)
+            {
+                if (nextPiece.x < 0 || nextPiece.x >= size.x ||
+                    nextPiece.y < 0 || nextPiece.y >= size.y)
+                {
+                    i++;
+                    continue;
+                }
+
+                ref var neighbour = ref pieces[nextPiece.x, nextPiece.y];
+                if (neighbour.TileType == TileType.Road && neighbour.Entrances.Length > 0 && neighbour[GetOpositeSide(i, neighbour.Types.Length)] != SideType.Road)
+                {
+                    var sides = GetSidesOfConnectedRoad(ref neighbour, in i);
+
+                    RepleacePiece(ref neighbour, TileType.Road, sides);
+                    connections.Add((i, SideType.Road));
+                }
+                i++;
+            }
+
+            if (connections.Count == 0) return;
+
+            RepleacePiece(ref cur, TileType.Road, connections.ToArray());
+            OnRoadAdded?.Invoke();
+        }
+
+        public Character SetCharacter(Vector3 pos, CharacterType type, uint rotation = 0)
+        {
+            var character = _pool.GetCharacter(type);
+            Vector3 toppPosition = new(pos.x, character.Prefab.transform.position.y, pos.z);
+
+            character.Prefab.transform.position = toppPosition;
+            character.Rotate((int)rotation);
+
+            return character;
+        }
+
+        public void SetCharacter(Vector3 pos, ref Character character, uint rotation = 0)
+        {
+            Vector3 toppPosition = new(pos.x, character.Prefab.transform.position.y, pos.z);
+
+            character.SetPiece(Instantiate(character.Prefab, toppPosition, character.Prefab.transform.rotation, transform));
+            character.Rotate((int)rotation);
+        }
+
+        public void RepleacePiece(ref Piece piece, TileType type, params (int idx, SideType)[] sides)
+        {
+            Piece newPiece = _pool.GetPiece(type, sides);
+
+            //Piece newPiece = type == TileType.Road ? PieceData.GetPiece(type, sides) : PieceData.GetPiece(type);
+
+            if (newPiece == null) return;
+
+            newPiece.Prefab.transform.position = piece.Prefab.transform.position;
+
+            int rotation = piece.Rotation;
+            _pool.KillPiece(ref piece, piece.TileType);
+            PieceData.ChangeType(newPiece, piece.Type);
+
+            piece = newPiece;
+            piece.Rotate();
+        }
+
+        public void SetPiece(ref Piece piece, in (int x, int y) pos)
+        {
+            Vector3 curPos = GetOffset(pos);
+
+            SetPiece(ref piece, curPos);
+        }
+
+        public void SetPiece(ref Piece piece, Vector3 curPos)
+        {
+            _pool.GetPiece(ref piece, piece.TileType);
+            piece.Prefab.transform.position = curPos;
+            piece.Prefab.transform.parent = transform;
+
+            piece.Rotate();
+
+            PieceData.ChangeType(piece, piece.Type);
+        }
+
+        private void SetTopping(ref Piece piece, ToppingType type, uint rotation = 0)
+        {
+            SetTopping(ref piece, PieceData.GetTopping(type), rotation);
+        }
+
+        private void SetTopping(ref Piece piece, Topping topp, uint rotation = 0)
+        {
+            Vector3 curPos = new(piece.Prefab.transform.position.x, 0, piece.Prefab.transform.position.z);
+            Vector3 toppPosition = new(curPos.x, topp.Prefab.transform.position.y, curPos.z);
+            
+            _pool.GetTopping(ref piece, topp.Type);
+
+            piece.Topping.Prefab.transform.position = toppPosition;
+            piece.Topping.Rotate((int)rotation);
         }
 
         private void GetStartPoint()
@@ -123,68 +305,6 @@ namespace WorldG.level
 
                 curCord = (newPos.x, newPos.y);
             }
-        }
-
-        public Vector3 GetOffset(Vector2Int cord)
-        {
-            return GetOffset((cord.x, cord.y));
-        }
-
-        public Vector3 GetOffset((float x, float y) cord)
-        {
-            Vector3 curPos = new Vector3(cord.x * 2, 0, cord.y * -1.75f);
-
-            if ((cord.y % 2 != 0))
-                curPos += Vector3.right;
-            return curPos;
-        }
-
-        public Vector2Int RemoveOffset(Vector3 position)
-        {
-            Vector2Int curPos = default;
-
-            int x = (int)(position.x * .5f);
-            int y = (int)((position.z / -1.75f));
-
-            curPos += new Vector2Int(x, y);
-            return curPos;
-        }
-
-        public void SetRoad(in Vector2Int cord)
-        {
-            ref var cur = ref pieces[cord.x, cord.y];
-
-            if (cur.Topping.Prefab) return;
-            if (cur.Type == SideType.Water) return;
-
-            List<(int idx, SideType side)> connections = new();
-            HexCircleMovement mov = new HexCircleMovement(size, cord, 1);
-            int i = 0;
-
-            foreach (var nextPiece in mov)
-            {
-                if (nextPiece.x < 0 || nextPiece.x >= size.x ||
-                    nextPiece.y < 0 || nextPiece.y >= size.y)
-                {
-                    i++;
-                    continue;
-                }
-
-                ref var neighbour = ref pieces[nextPiece.x, nextPiece.y];
-                if (neighbour.TileType == TileType.Road && neighbour.Entrances.Length > 0 && neighbour[GetOpositeSide(i, neighbour.Types.Length)] != SideType.Road)
-                {
-                    var sides = GetSidesOfConnectedRoad(ref neighbour, in i);
-
-                    RepleacePiece(ref neighbour, TileType.Road, sides);
-                    connections.Add((i, SideType.Road));
-                }
-                i++;
-            }
-
-            if (connections.Count == 0) return;
-
-            RepleacePiece(ref cur, TileType.Road, connections.ToArray());
-            OnRoadAdded?.Invoke();
         }
 
         private (int idx, SideType side)[] GetSidesOfConnectedRoad(ref Piece neighbour, in int start)
@@ -275,16 +395,6 @@ namespace WorldG.level
             piece = pieces[newPos.x, newPos.y];
 
             return true;
-        }
-
-        public Vector2Int MovePosition(in Vector2Int cord, int idx)
-        {
-            return new Vector2Int
-            {
-                x = cord.x + ((((cord.y % 2 == 0 && directions[idx].x > 0) || (cord.y % 2 != 0 && directions[idx].x < 0))
-                             && directions[idx].y != 0) ? 0 : directions[idx].x),
-                y = cord.y + directions[idx].y
-            };
         }
 
         private int GetOpositeSide(int idx, int max)
@@ -431,76 +541,6 @@ namespace WorldG.level
                     }
                 }
             }
-        }
-
-        private void SetTopping(ref Piece piece, ToppingType type, uint rotation = 0)
-        {
-            SetTopping(ref piece, PieceData.GetTopping(type), rotation);
-        }
-
-        private void SetTopping(ref Piece piece, Topping topp, uint rotation = 0)
-        {
-            Vector3 curPos = new(piece.Prefab.transform.position.x, 0, piece.Prefab.transform.position.z);
-            Vector3 toppPosition = new(curPos.x, topp.Prefab.transform.position.y, curPos.z);
-
-            _pool.GetTopping(ref piece, ref topp);
-            piece.Topping.Prefab.transform.position = toppPosition;
-            topp.Rotate((int)rotation);
-        }
-
-        public Character SetCharacter(Vector3 pos, CharacterType type, uint rotation = 0)
-        {
-            var character = _pool.GetCharacter(type);
-            Vector3 toppPosition = new(pos.x, character.Prefab.transform.position.y, pos.z);
-
-            character.Prefab.transform.position = toppPosition;
-            character.Rotate((int)rotation);
-
-            return character;
-        }
-
-        public void SetCharacter(Vector3 pos, ref Character character, uint rotation = 0)
-        {
-            Vector3 toppPosition = new(pos.x, character.Prefab.transform.position.y, pos.z);
-
-            character.SetPiece(Instantiate(character.Prefab, toppPosition, character.Prefab.transform.rotation, transform));
-            character.Rotate((int)rotation);
-        }
-
-        public void RepleacePiece(ref Piece piece, TileType type, params (int idx, SideType)[] sides)
-        {
-            Piece newPiece = _pool.GetPiece(type, sides);
-
-            //Piece newPiece = type == TileType.Road ? PieceData.GetPiece(type, sides) : PieceData.GetPiece(type);
-
-            if (newPiece == null) return;
-
-            newPiece.Prefab.transform.position = piece.Prefab.transform.position;
-            
-            int rotation = piece.Rotation;
-            _pool.KillPiece(ref piece, piece.TileType);
-            PieceData.ChangeType(newPiece, piece.Type);
-
-            piece = newPiece;
-            piece.Rotate();
-        }
-
-        public void SetPiece(ref Piece piece, in (int x, int y) pos)
-        {
-            Vector3 curPos = GetOffset(pos);
-
-            SetPiece(ref piece, curPos);
-        }
-
-        public void SetPiece(ref Piece piece, Vector3 curPos)
-        {
-            _pool.GetPiece(ref piece, piece.TileType);
-            piece.Prefab.transform.position = curPos;
-            piece.Prefab.transform.parent = transform;
-            
-            piece.Rotate();
-
-            PieceData.ChangeType(piece, piece.Type);
         }
     } 
 }

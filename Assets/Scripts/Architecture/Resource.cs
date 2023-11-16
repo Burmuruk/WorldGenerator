@@ -1,11 +1,15 @@
 ﻿using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using WorldG.Control;
+using WorldG.level;
 
 namespace WorldG.Architecture
 {
-    public class Resource : MonoBehaviour, ISelectable, IKillable
+    public class Resource : MonoBehaviour, ISelectable, IKillable, IClickable
     {
+        LevelGenerator level;
+
         [SerializeField] float health = 100;
         private bool _isSelected = false;
         Action onDeselection;
@@ -19,6 +23,13 @@ namespace WorldG.Architecture
         public float Health => health;
 
         public Action OnDie { get => onDie; set => onDie += value; }
+
+        public bool IsWorking => throw new NotImplementedException();
+
+        private void Awake()
+        {
+            level = FindObjectOfType<LevelGenerator>();
+        }
 
         public void Select()
         {
@@ -36,6 +47,19 @@ namespace WorldG.Architecture
         public void SetDamage(float damage)
         {
             health -= damage;
+        }
+
+        public void Click()
+        {
+            if (level.GetPieceInfo(transform.position).TileType == TileType.Road)
+                return;
+
+            //level.SetPiece
+        }
+
+        public void DoubleClick()
+        {
+            
         }
     }
 

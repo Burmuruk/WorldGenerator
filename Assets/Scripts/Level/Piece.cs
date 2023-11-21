@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.ConstrainedExecution;
 using UnityEngine;
+using WorldG.Architecture;
 
 public enum ToppingType
 {
@@ -91,6 +94,7 @@ public record Piece
     public Topping Topping { get => _topping; }
     public TileType TileType { get => _tileType; set => _tileType = value; }
     public int Version { get => versionID; }
+    public ArrayList Components { get; set; } = null;
 
     public int[] Entrances
     {
@@ -142,10 +146,30 @@ public record Piece
         id = versionID;
     }
 
-    public void SetTopping(Topping topping)
+    public IWorker SetTopping(Topping topping)
     {
         this._topping = topping;
         ToppingType = topping.Type;
+
+        object component = _topping.Type switch
+        {
+            ToppingType.Rock => new ResourceWorker(),
+            ToppingType.Tree => new ResourceWorker(),
+            ToppingType.Woods => new ResourceWorker(),
+            ToppingType.None => null,
+            _ => new BuildingWorker()
+        };
+
+        if (component != null)
+        {
+            (Components??= new()).Add(component);
+            var worker = (IWorker)component;
+            worker.OnStop += RemoveTopping;
+
+            return worker;
+        }
+
+        return null;
     }
 
     public int GetIdxMaterial(int idx)
@@ -167,6 +191,7 @@ public record Piece
     {
         _topping = default;
         ToppingType = ToppingType.None;
+        Components = null;
     }
 
     public void ResetEntrances() => _entrances = null;

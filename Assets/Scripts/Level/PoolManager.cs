@@ -200,11 +200,13 @@ namespace WorldG.level
                     {
                         if (version >= 0 ? cur.Value.Version == version : true)
                         {
-                            piece.SetTopping(cur.Value);
+                            var worker = piece.SetTopping(cur.Value);
                             SetToppingAvailable(ref piece);
+                            var (pref, typep) = (piece.Topping.Prefab, piece.ToppingType);
+                            worker.OnStop += () => DisableTopping(pref, typep);
 
                             if (piece.Topping.Prefab)
-                                SetToppingAvailable(ref piece, false);
+                                SetToppingAvailable(ref piece);
                             return;
                         }
                     }
@@ -215,7 +217,7 @@ namespace WorldG.level
             }
 
             if (piece.Topping.Prefab)
-                SetToppingAvailable(ref piece, false);
+                SetToppingAvailable(ref piece);
 
             if (!_toppingsPool.ContainsKey(toppingType))
                 _toppingsPool.Add(toppingType, new());
@@ -226,12 +228,16 @@ namespace WorldG.level
             var (type, prefab, sides, versionID, haveSpline) = topping;
             var copy = new Topping(type, prefab, sides, versionID, haveSpline);
 
-            piece.SetTopping(topping);
+            var worker1 = piece.SetTopping(topping);
+            var (pref1, typep1) = (piece.Topping.Prefab, piece.ToppingType);
+
+            worker1.OnStop += () => DisableTopping(pref1, typep1);
             piece.Topping.Prefab.SetActive(true);
+
             _toppingsPool[piece.ToppingType].AddLast(copy);
         }
 
-        private void SetToppingAvailable(ref Piece piece, bool value = true)
+        private void SetToppingAvailable(ref Piece piece)
         {
             var cur = _toppingsPool[piece.Topping.Type].First;
             for (int i = 0; i < _toppingsPool[piece.Topping.Type].Count; i++)
@@ -240,13 +246,10 @@ namespace WorldG.level
                 {
                     if (cur.Value.Prefab.GetInstanceID() == piece.Topping.Prefab.GetInstanceID())
                     {
-                        piece.Topping.Prefab.SetActive(value);
+                        piece.Topping.Prefab.SetActive(true);
                         _toppingsPool[piece.Topping.Type].Remove(cur);
 
-                        if (value)
-                            _toppingsPool[piece.Topping.Type].AddLast(cur);
-                        else
-                            _toppingsPool[piece.Topping.Type].AddFirst(cur);
+                        _toppingsPool[piece.Topping.Type].AddLast(cur);
 
                         break;
                     }
@@ -254,6 +257,29 @@ namespace WorldG.level
                 else break;
 
                 cur = cur.Next;
+            }
+        }
+
+        public void DisableTopping(GameObject piece, ToppingType type)
+        {
+            var cur = _toppingsPool[type].Last;
+            for (int i = 0; i < _toppingsPool[type].Count; i++)
+            {
+                if (cur.Value.Prefab.activeSelf)
+                {
+                    if (cur.Value.Prefab.GetInstanceID() == piece.GetInstanceID())
+                    {
+                        piece.SetActive(false);
+                        _toppingsPool[type].Remove(cur);
+
+                        _toppingsPool[type].AddFirst(cur);
+
+                        break;
+                    }
+                }
+                else break;
+
+                cur = cur.Previous;
             }
         }
 

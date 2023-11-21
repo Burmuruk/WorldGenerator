@@ -22,6 +22,7 @@ namespace WorldG.Patrol
         Spline spline;
 
         public event Action OnFinished;
+        public event Action OnPatrolFinished;
 
         public enum TaskType
         {
@@ -49,8 +50,6 @@ namespace WorldG.Patrol
         PatrolController innerController = null;
 
         #endregion
-
-        #region public methods
         public Transform NextPoint
         {
             get
@@ -83,7 +82,8 @@ namespace WorldG.Patrol
                     return default;
             }
         } 
-        #endregion
+        public Movement Mover { get => mover; set => mover = value; }
+        public bool CancelRequested { get; private set; }
 
         #region private methods
         private void Awake()
@@ -106,15 +106,16 @@ namespace WorldG.Patrol
         {
             if (!mover) return;
 
-            mover.OnFinished += () => Execute_Tasks();
+            mover.OnFinished += Execute_Tasks;
         }
 
         private void OnDisable()
         {
             if (mover)
-                mover.OnFinished -= () => Execute_Tasks();
+                mover.OnFinished -= Execute_Tasks;
         }
 
+        #region public methods
         public void SetNodeList(INodeListSupplier nodeList, CyclicType cyclicType)
         {
             this.cyclicType = cyclicType;
@@ -145,7 +146,7 @@ namespace WorldG.Patrol
             finder.OnPathCalculated += () =>
             {
                 var route = finder.BestRoute;
-                print("Total nodes!! =>  " + route?.Count);
+                //print("Total nodes!! =>  " + route?.Count);
                 enumerator?.Dispose();
                 enumerator = null;
                 CreateSpline();
@@ -185,6 +186,7 @@ namespace WorldG.Patrol
 
         public void Initialize()
         {
+            if (!spline) spline = transform.GetComponentInChildren<Spline>();
             spline.Initialize();
 
             tasksList = new();
@@ -196,25 +198,34 @@ namespace WorldG.Patrol
 
         public void Execute_Tasks()
         {
+            if (CancelRequested) { RestartTasks(); return; }
+
             currentAction++;
-            if (currentAction < tasksList.Count && tasksList != null)
+            if (tasksList != null && currentAction < tasksList.Count)
             {
                 taskValue = tasks[currentAction].value;
                 tasksList[currentAction].Invoke();
+                return;
             }
-            else if (shouldRepeat && tasksList != null && currentAction >= tasksList.Count)
+            else if (shouldRepeat && tasksList != null)
             {
                 currentAction = -1;
                 Execute_Tasks();
+                return;
             }
-            else Debug.Log("Bye");
-            //else OnFinished?.Invoke();
-        } 
+
+            RestartTasks();
+        }  
+
+        public void AbortPatrol () => CancelRequested = true;
+        #endregion
 
         private void RestartTasks()
         {
             currentAction = -1;
-            enumerator.Reset();
+            enumerator?.Reset();
+            OnPatrolFinished?.Invoke();
+            CancelRequested = false;
         }
         #endregion
     }

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using WorldG.Architecture;
 
 namespace WorldG.level
 {
@@ -528,7 +529,6 @@ namespace WorldG.level
                 for (int j = 0; j < size.y; j++)
                 {
                     ref var cur = ref pieces[i, j];
-                    Vector3 curPos = GetOffset((i, j));
                     var topp = PieceData.GetRandomTopp(cur.Type);
 
                     if (topp.HasValue)

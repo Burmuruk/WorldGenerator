@@ -108,7 +108,7 @@ MonoBehaviour:
     - {fileID: 6559978255866283037, guid: 7559c6412adfaf44daeaa7378b2429b2, type: 3}
     - {fileID: 7757400793276707489, guid: f5c3399fc5a4e7640b72b2c8bdd6299a, type: 3}
     - {fileID: 713849528738012644, guid: da26d7878f5532a49b6456426d5dab73, type: 3}
-    haveSpline: 0
+    haveSpline: 1
     sides: 
   - type: 8
     pieces:

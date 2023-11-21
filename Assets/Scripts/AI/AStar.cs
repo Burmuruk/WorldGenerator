@@ -106,7 +106,7 @@ namespace Coco.AI.PathFinding
             try
             {
                 Get_ShortestPath(ref lists, out distance);
-                Debug.Log($"Shortest {lists.shortestPath.First.Value.ID} to {lists.shortestPath.Last.Value.ID}");
+                //Debug.Log($"Shortest {lists.shortestPath.First.Value.ID} to {lists.shortestPath.Last.Value.ID}");
             }
             catch (Exception)
             {

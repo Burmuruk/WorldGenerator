@@ -159,7 +159,7 @@ namespace Coco.AI.PathFinding
             if (curPath < 0)
                 curPath = idxDis;
 
-            Debug.Log($"Sorteado index {idxDis} distance {routeSizes[idxDis].distance} to {paths[idx].Last.Value.ID}");
+            //Debug.Log($"Sorteado index {idxDis} distance {routeSizes[idxDis].distance} to {paths[idx].Last.Value.ID}");
 
             isCalculating = false;
 
@@ -237,7 +237,7 @@ namespace Coco.AI.PathFinding
             try
             {
                 float dis = 0;
-                Debug.Log($"start {start.ID} endo {end.ID}");
+                //Debug.Log($"start {start.ID} endo {end.ID}");
                 var path = Get_Route(start, end, out dis);
 
                 if (path == null) return;

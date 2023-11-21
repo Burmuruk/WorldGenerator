@@ -1,29 +1,44 @@
 ﻿using Coco.AI.PathFinding;
 using System;
 using UnityEngine;
+using WorldG.level;
 using WorldG.Patrol;
+using static UnityEngine.GraphicsBuffer;
 
 namespace WorldG.Control
 {
     public class Minion : MonoBehaviour, ISelectable
-    {
-        [SerializeField]private bool _isSelected;
-        [SerializeField] private bool _isWorking = false;
+{
+        [SerializeField] private bool _isSelected;
+        [SerializeField] protected bool _isWorking = false;
         [SerializeField] Spline spline;
         protected PatrolController _patrolController;
-        Action onDeselection;
         protected Movement movement;
+        protected LevelGenerator level;
+        Action onDeselection;
+
+        [SerializeField] protected bool isMoving = false;
 
         public bool IsSelected => _isSelected;
-        public bool IsWorking => _isWorking;
+        public bool IsWorking
+        {
+            get
+            {
+                if (isMoving || _isWorking)
+                    return true;
+
+                return false;
+            }
+        }
         public Action OnDeselection { get => onDeselection; set => onDeselection += value; }
 
-        private void Awake()
+        protected virtual void Awake()
         {
             _patrolController = gameObject.GetComponent<PatrolController>();
-            _patrolController.OnFinished += () => _isWorking = true;
             _patrolController.OnFinished += _patrolController.Execute_Tasks;
+            
             movement = GetComponent<Movement>();
+            level = FindObjectOfType<LevelGenerator>();
         }
 
         private void Update()
@@ -48,18 +63,42 @@ namespace WorldG.Control
 
         public virtual void SetWork(object args) { }
 
-        public void Move(object destiny)
+        public void MoveInRoad(object destiny)
         {
+            if (IsWorking) return;
             Vector3 target = (Vector3)destiny;
             Debug.DrawRay(target, Vector3.up * 10, Color.white, 10);
 
+            //StopActions();
+            MoveTo(target);
+        }
+
+        protected void MoveTo(Vector3 target)
+        {
+            _patrolController.OnPatrolFinished += StopPath;
             _patrolController.CreatePatrolWithSpline<AStar>(transform.position, target, CyclicType.None);
-            _isWorking = true;
+            isMoving = true;
         }
 
         public void SetConnections(INodeListSupplier nodeList)
         {
             _patrolController.SetNodeList(nodeList, CyclicType.None);
+        }
+
+        protected virtual void MoveToTarget() { }
+
+        private void StopPath()
+        {
+            isMoving = false;
+            _patrolController.OnPatrolFinished -= StopPath;
+        }
+
+        protected void StopActions()
+        {
+            if (!IsWorking) return;
+
+            _patrolController.AbortPatrol();
+
         }
     }
 

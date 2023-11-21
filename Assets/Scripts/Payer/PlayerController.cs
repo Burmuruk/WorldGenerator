@@ -96,7 +96,7 @@ namespace WorldG.Control
             var wheel = Input.mouseScrollDelta.y;
             if (wheel != 0)
             {
-                Camera.main.transform.Translate(new Vector3(0, wheel * zoomSpeed * Time.deltaTime, 0), Space.World);
+                Camera.main.transform.Translate(new Vector3(0, wheel * zoomSpeed * Time.deltaTime * -1, 0), Space.World);
             }
         }
 

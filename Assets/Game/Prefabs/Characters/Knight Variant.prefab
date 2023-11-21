@@ -109,21 +109,6 @@ MonoBehaviour:
   tasks:
   - type: 2
     value: 0
---- !u!114 &2647720019065341431
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8013490252386846202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3fa4f86ef3a76e4459c1151d9597527f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _isSelected: 0
-  _isWorking: 0
-  spline: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
 --- !u!114 &4977801959857644724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -140,3 +125,18 @@ MonoBehaviour:
   rotationVelocity: 2
   turnWhileMove: 1
   minDistance: 0.8
+--- !u!114 &1727275148644290543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8013490252386846202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9e96d5886f681c43b0780d314cda095, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _isSelected: 0
+  _isWorking: 0
+  spline: {fileID: 0}

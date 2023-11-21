@@ -109,10 +109,12 @@ namespace WorldG.Patrol
         #region public methods
         public void Initialize()
         {
+            if (initialized) return;
+            
             var points = transform.GetComponentsInChildren<MyNode>();
             Set_NodeSettings(points);
 
-            path = new PatrolPath<MyNode>(cyclicType, points: points);
+            path = new PatrolPath<MyNode>(cyclicType, points);
             nodesCount = path.Count;
             initialized = true;
         }
@@ -163,7 +165,7 @@ namespace WorldG.Patrol
         ~Spline()
         {
             if (path) path.Dispose();
-            Debug.Log("Bye Bye Spline chan");
+            //Debug.Log("Bye Bye Spline chan");
         }
     }
 

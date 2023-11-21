@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using WorldG.Architecture;
 using WorldG.Control;
@@ -55,18 +56,16 @@ namespace WorldG.level
         public void SetTarget(ISelectable selectable, object args = null)
         {
             if (selected.Count < 0) return;
-            object hi = 2;
             GetRoadsConnections();
+
             switch (selectable)
             {
                 case Resource r:
-                    selected.ForEach((m) => m.SetTask(m.SetWork, r.ID));
-                    foreach (Minion minion in selected)
-                        minion.SetTask(minion.SetWork, hi);
+                    selected.ForEach((m) => m.SetTask(m.SetWork, r));
                     break;
 
                 case Building f:
-                    selected.ForEach((m) => m.SetTask(m.SetWork, f.ID));
+                    selected.ForEach((m) => m.SetTask(m.SetWork, f));
                     break;
 
                 case Minion minion:
@@ -74,14 +73,14 @@ namespace WorldG.level
                     break;
 
                 default:
-                    selected.ForEach((m) => m.SetTask(m.Move, args));
+                    selected.ForEach((m) => m.SetTask(m.MoveInRoad, args));
                     break;
             }
         }
 
         private void GetRoadsConnections()
         {
-            print("Road");
+            //print("Road");
             //if (roads != null && roads.Count > 0) return ;
 
             roadsConnections = new();

@@ -322,7 +322,7 @@ namespace WorldG.Patrol
         ~PatrolPath()
         {
             Dispose();
-            Debug.Log("End Patrol Path");
+            //Debug.Log("End Patrol Path");
         }
     }
 }

@@ -33,15 +33,15 @@ public class MinionPopUpMenu : MonoBehaviour
         if (curId != -1 && curId == id) { HideButtons(); return; }
 
         curId = id;
-        transform.position = position;
-        var lookAt = GetComponent<LookAtConstraint>();
-        ConstraintSource constraint = new()
-        {
-            weight = 1,
-            sourceTransform = Camera.main.transform,
-        };
+        transform.position = position + Vector3.forward;
+        //var lookAt = GetComponent<LookAtConstraint>();
+        //ConstraintSource constraint = new()
+        //{
+        //    weight = 1,
+        //    sourceTransform = Camera.main.transform,
+        //};
 
-        lookAt.AddSource(constraint);
+        //lookAt.AddSource(constraint);
 
         for (int i = 0; i < characters.Length; i++)
         {

@@ -11,6 +11,8 @@ namespace MyDearAnima.Controll
 
         public T Item { get => item; private set => item = value; }
         public bool IsDisabled { get; private set; }
+        public bool RestartRequested { get; private set; } = false;
+        public bool IsRunning { get; private set; }
 
         public DisableInTime(float time, T item)
         {
@@ -21,11 +23,19 @@ namespace MyDearAnima.Controll
 
         public IEnumerator EnableInTime(bool shouldDisable = true)
         {
-            Enable(shouldDisable);
+            IsRunning = true;
 
-            yield return new WaitForSeconds(time);
+            do
+            {
+                RestartRequested = false;
+                Enable(shouldDisable);
 
-            Enable(!shouldDisable);
+                yield return new WaitForSeconds(time);
+            }
+            while (RestartRequested);
+            
+            Enable(!shouldDisable); 
+            IsRunning = false;
         }
 
         public void Enable(bool shouldEnable)
@@ -42,6 +52,11 @@ namespace MyDearAnima.Controll
             }
 
             IsDisabled = shouldEnable;
+        }
+
+        public void Restart()
+        {
+            RestartRequested = true;
         }
 
         public void Repleace_Item(T item) => Item = item;

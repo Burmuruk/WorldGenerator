@@ -445,22 +445,6 @@ MonoBehaviour:
     value: 1
   - type: 3
     value: 1
---- !u!114 &5879986977685112353
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7757400793276707489}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2894cb4ea3e3a7e45a3609144c87936f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 3
-  rotationVelocity: 2
-  turnWhileMove: 1
-  minDistance: 0.8
 --- !u!1001 &7493636734866728619
 PrefabInstance:
   m_ObjectHideFlags: 0

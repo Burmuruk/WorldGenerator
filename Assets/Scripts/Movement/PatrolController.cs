@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace WorldG.Patrol
 {
-    [RequireComponent(typeof(SphereCollider), typeof(Movement))]
+    [RequireComponent(typeof(SphereCollider))]
     public class PatrolController : MonoBehaviour
     {
         #region Variables
@@ -90,28 +90,19 @@ namespace WorldG.Patrol
         {
             mover = GetComponent<Movement>();
 
-            if (mover)
-                actionsList = new Dictionary<TaskType, Action>()
-                {
-                    { TaskType.Turn, () => mover.TurnTo((float)taskValue) },
-                    { TaskType.Move, () => { 
-                        Transform p = NextPoint;
-                        if (p == null) { RestartTasks(); return;}
-                        mover.MoveTo(p); } },
-                    { TaskType.Wait, () => Invoke("Execute_Tasks", (float)taskValue)}
-                };
+            InitializeTasks();
         }
 
         private void OnEnable()
         {
-            if (!mover) return;
+            if (mover == null) return;
 
             mover.OnFinished += Execute_Tasks;
         }
 
         private void OnDisable()
         {
-            if (mover)
+            if (mover != null)
                 mover.OnFinished -= Execute_Tasks;
         }
 
@@ -190,6 +181,9 @@ namespace WorldG.Patrol
             spline.Initialize();
 
             tasksList = new();
+            if (actionsList == null && !InitializeTasks())
+                return;
+
             foreach (var task in tasks)
             {
                 tasksList.Add(actionsList[task.type]);
@@ -226,6 +220,23 @@ namespace WorldG.Patrol
             enumerator?.Reset();
             OnPatrolFinished?.Invoke();
             CancelRequested = false;
+        }
+
+        private bool InitializeTasks()
+        {
+            if (!mover) return false;
+
+            actionsList = new Dictionary<TaskType, Action>()
+                {
+                    { TaskType.Turn, () => mover.TurnTo((float)taskValue) },
+                    { TaskType.Move, () => {
+                        Transform p = NextPoint;
+                        if (p == null) { RestartTasks(); return;}
+                        mover.MoveTo(p); } },
+                    { TaskType.Wait, () => Invoke("Execute_Tasks", (float)taskValue)}
+                };
+
+            return true;
         }
         #endregion
     }

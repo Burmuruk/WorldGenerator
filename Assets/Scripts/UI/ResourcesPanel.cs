@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyDearAnima.Controll;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,6 +21,8 @@ namespace WorldG.UI
             public ResourceType type;
             public GameObject panel;
             public TextMeshProUGUI text;
+            
+            public DisableInTime<GameObject> dtShowAmount { get; set; }
         }
 
         private void Awake()
@@ -27,6 +30,12 @@ namespace WorldG.UI
             inventory = FindObjectOfType<Inventory>();
 
             inventory.OnResourceChanged += UpdateResource;
+        }
+
+        private void Start()
+        {
+            for (int i = 0; i < panels.Length; i++)
+                panels[i].dtShowAmount = new(2, panels[i].panel);
         }
 
         private void UpdateResource(ResourceType type, int amount)
@@ -38,7 +47,11 @@ namespace WorldG.UI
                     float value = 0;
                     if (float.TryParse(panel.text.text, out value))
                     {
-                        panel.panel.SetActive(true);
+                        if (panel.dtShowAmount.IsRunning) 
+                            panel.dtShowAmount.Restart();
+                        else
+                            StartCoroutine(panel.dtShowAmount.EnableInTime());
+
                         panel.text.text = amount.ToString();
                     }
                 }

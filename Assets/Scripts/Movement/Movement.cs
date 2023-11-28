@@ -8,10 +8,22 @@ public class Movement : MonoBehaviour
     [SerializeField] float rotationVelocity = 2;
     [SerializeField] bool turnWhileMove = true;
 
+    [SerializeField] float m_speed, m_maxVel, m_maxSteerForce;
+    [SerializeField] float health = 100;
+
     [Header("Behaviour")]
     //[SerializeField] float visionDistance = 4;
     //[SerializeField] float visionAngle = 90;
     [SerializeField] float minDistance = .8f;
+    [SerializeField] bool isLeader = false;
+
+
+
+    public float wanderDisplacement, wanderRadious;
+    bool isReceivingDamage = false;
+    public Transform m_target;
+    public Transform m_Leader;
+    public Vector3? wandernextPosition = null;
 
     public Action OnFinished;
 
@@ -61,6 +73,10 @@ public class Movement : MonoBehaviour
             }
         }
     }
+    public float Speed { get => m_speed; }
+    public float MaxVel { get => m_maxVel; }
+    public float MaxSteerForce { get => m_maxSteerForce; }
+    public bool IsLeader { get => isLeader; }
 
     private void Awake()
     {

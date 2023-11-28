@@ -51,13 +51,20 @@ namespace WorldG.Control
 
                         InteractWithStructure(c, hit.colliderInstanceID);
                     }
+                    else if (hit.collider.gameObject.GetComponent<Citizen>() is var m && m != null)
+                    {
+                        _minionsManager.SelectMinion(m);
+                    }
                     else
                     {
+                        _minionsManager.DeSelect();
                         var cord = level.RemoveOffset(hit.collider.transform.position);
                         //PieceData.ChangeColor(pieces[cord.x, cord.y], SideType.Mudd);
                         level.SetRoad(cord);
                     }
                 }
+                else
+                    _minionsManager.DeSelect();
             }
 
             if (Input.GetMouseButtonDown(1))
@@ -68,12 +75,12 @@ namespace WorldG.Control
                 {
                     if (hit.collider.gameObject.GetComponent<ISelectable>() is var s && s != null)
                     {
-                        if (selected.id == hit.colliderInstanceID && s.IsSelected)
+                        if (s.IsSelected)
                         {
-                            selected.Item2?.Deselect();
-                            selected = (hit.colliderInstanceID, s);
+                            s.Deselect();
+                            selected = (-1, null);
                         }
-                        else
+                        else 
                         {
                             selected.selectable?.Deselect();
                             selected = (hit.colliderInstanceID, s);
@@ -88,7 +95,7 @@ namespace WorldG.Control
                     else
                     {
                         _minionsManager.SetTarget(null, hit.collider.transform.position);
-                        selected = (hit.colliderInstanceID, s);
+                        selected = (-1, null);
                     }
                 }
             }

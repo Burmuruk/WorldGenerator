@@ -5,7 +5,7 @@ using WorldG.Stats;
 
 namespace WorldG.Control
 {
-    public class Citizen : Minion
+    public class Citizen : Minion, IClickable
     {
         private Resource target;
         [SerializeField] private int damage = 0;
@@ -111,5 +111,13 @@ namespace WorldG.Control
 
             yield break;
         }
+
+        public void Click()
+        {
+            var menu = FindObjectOfType<MinionMenuController>();
+            menu.ShowMenu();
+        }
+
+        public void DoubleClick() { }
     }
 }

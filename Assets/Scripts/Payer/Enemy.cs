@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WorldG.Control
 {
-    public class Warrior : Minion, ISelectable
+    public class Enemy : Minion
     {
 
     }

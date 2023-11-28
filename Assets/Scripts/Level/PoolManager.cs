@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using WorldG.Control;
 
@@ -14,10 +16,12 @@ namespace WorldG.level
         private Dictionary<ToppingType, LinkedList<Topping>> _toppingsPool = new();
         private Dictionary<CharacterType, LinkedList<Minion>> _charactersPool = new();
         private Dictionary<int, List<Minion>> _minions = new();
+        private Dictionary<ToppingType, LinkedList<UnmanagedTopping>> _unmanagedToppings = new();
 
         private Transform piecesParent;
         private Transform toppingsParent;
         private Transform characterParent;
+        private bool checkUnmaged = false;
 
         private void Awake()
         {
@@ -44,7 +48,25 @@ namespace WorldG.level
         }
 
         public Dictionary<CharacterType, LinkedList<Minion>> Minions { get => _charactersPool; }
-        
+
+        public struct UnmanagedTopping
+        {
+            public GameObject Prefab { get; private set; }
+            public System.Object Owner { get; private set; }
+            public bool IsAlive { get =>  Owner != null; }
+            public ToppingType Type { get; private set; }
+            public int Version { get; private set; }
+
+            public UnmanagedTopping(GameObject piece, System.Object owner, ToppingType type, int version = -1)
+            {
+                Prefab = piece;
+                Owner = owner;
+                Type = type; 
+                Version = version;
+            }
+
+            public void SetOwner(object owner) => Owner = owner;
+        }
         public struct MinionGroup
         {
             int id;
@@ -237,6 +259,59 @@ namespace WorldG.level
             _toppingsPool[piece.ToppingType].AddLast(copy);
         }
 
+        private Topping GetTopping(object owner, ToppingType toppingType, int version = -1)
+        {
+            if (_unmanagedToppings.ContainsKey(toppingType))
+            {
+                var cur = _unmanagedToppings[toppingType].First;
+
+                for (int i = 0; i < _unmanagedToppings[toppingType].Count; i++)
+                {
+                    if (!cur.Value.Prefab.activeSelf)
+                    {
+                        if (version >= 0 ? cur.Value.Version == version : true)
+                        {
+                            cur.Value.SetOwner(owner);
+                            return cur.Value;
+
+                            _unmanagedToppings[toppingType].AddFirst(cur);
+
+                            var worker = piece.SetTopping(cur.Value);
+                            SetToppingAvailable(ref piece);
+                            var (pref, typep) = (piece.Topping.Prefab, piece.ToppingType);
+                            worker.OnStop += () => DisableTopping(pref, typep);
+
+                            if (piece.Topping.Prefab)
+                                SetToppingAvailable(ref piece);
+                            return;
+                        }
+                    }
+
+                    cur = cur.Next;
+                }
+            }
+
+            if (piece.Topping.Prefab)
+                SetToppingAvailable(ref piece);
+
+            if (!_toppingsPool.ContainsKey(toppingType))
+                _toppingsPool.Add(toppingType, new());
+
+            var topping = pieceCollection.GetTopping(toppingType);
+            topping.SetPrefab(Instantiate(topping.Prefab, topping.Prefab.transform.position, topping.Prefab.transform.rotation, toppingsParent));
+
+            var (type, prefab, sides, versionID, haveSpline) = topping;
+            var copy = new Topping(type, prefab, sides, versionID, haveSpline);
+
+            var worker1 = piece.SetTopping(topping);
+            var (pref1, typep1) = (piece.Topping.Prefab, piece.ToppingType);
+
+            worker1.OnStop += () => DisableTopping(pref1, typep1);
+            piece.Topping.Prefab.SetActive(true);
+
+            _toppingsPool[piece.ToppingType].AddLast(copy);
+        }
+
         private void SetToppingAvailable(ref Piece piece)
         {
             var cur = _toppingsPool[piece.Topping.Type].First;
@@ -331,6 +406,37 @@ namespace WorldG.level
         public LinkedList<Piece> GetRoads()
         {
             return _piecesPool[TileType.Road];
+        }
+
+        private IEnumerator CheckUnmanagedToppings()
+        {
+            while (checkUnmaged)
+            {
+                foreach (var key in _unmanagedToppings.Keys)
+                {
+                    var cur = _unmanagedToppings[key].First;
+
+                    for (int i = 0; i < _unmanagedToppings[key].Count; i++)
+                    {
+                        if (cur.Value.Owner == null)
+                        {
+                            var next = cur.Next;
+                            Destroy(cur.Value.Prefab);
+                            _unmanagedToppings[key].Remove(cur);
+                            
+                            --i;
+                            cur = next;
+                            continue;
+                        }
+
+                        cur = cur.Next;
+                    }
+                }
+
+                yield return new WaitForSeconds(60);
+            }
+
+            yield break;
         }
     } 
 }

@@ -24,7 +24,7 @@ namespace WorldG.Architecture
 
         public Action OnDie { get => onDie; set => onDie += value; }
 
-        public bool IsWorking => throw new NotImplementedException();
+        public bool IsWorking => false;
 
         private void Awake()
         {

@@ -115,7 +115,7 @@ MonoBehaviour:
     - {fileID: 453744690016516200, guid: ad9d298b5eed1fd42a08af7c0e95c7b4, type: 3}
     - {fileID: 3085301245647985125, guid: 2ff089b94e7ffd64b877ee14be22399a, type: 3}
     - {fileID: 6632999393708650951, guid: 668a3404e829df744a1df0fc09ad5a59, type: 3}
-    haveSpline: 0
+    haveSpline: 1
     sides: 
   - type: 7
     pieces:
@@ -252,8 +252,8 @@ MonoBehaviour:
     toppingRelations:
     - type: 6
       probability: 0.09
-    - type: 6
-      probability: 0.001
+    - type: 8
+      probability: 0.01
   - type: 5
     pieceRelations:
     - type: 1
@@ -268,8 +268,8 @@ MonoBehaviour:
       probability: 0.4
   areas:
   - type: 5
-    minSize: 2
-    maxSize: 3
+    minSize: 20
+    maxSize: 30
     randomDirection: 0.77
     deepSearch: 2
     toppingTypes: []
@@ -280,8 +280,8 @@ MonoBehaviour:
     deepSearch: 2
     toppingTypes: []
   - type: 6
-    minSize: 2
-    maxSize: 4
+    minSize: 25
+    maxSize: 30
     randomDirection: 0.818
     deepSearch: 2
     toppingTypes:

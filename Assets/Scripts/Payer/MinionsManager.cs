@@ -44,12 +44,15 @@ namespace WorldG.level
 
         public void SelectMinion(Minion minion)
         {
-            selected.Clear();
+            DeSelect();
+            selected.Add(minion);
             minion.Select();
         }
 
         public void DeSelect()
         {
+            foreach (Minion minion in selected)
+                minion.Deselect();
             selected.Clear();
         }
 
@@ -76,6 +79,8 @@ namespace WorldG.level
                     selected.ForEach((m) => m.SetTask(m.MoveInRoad, args));
                     break;
             }
+
+            selectable?.Deselect();
         }
 
         private void GetRoadsConnections()

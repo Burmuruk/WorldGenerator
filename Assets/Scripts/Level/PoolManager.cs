@@ -51,15 +51,15 @@ namespace WorldG.level
 
         public struct UnmanagedTopping
         {
-            public GameObject Prefab { get; private set; }
+            public Topping Topping { get; private set; }
             public System.Object Owner { get; private set; }
             public bool IsAlive { get =>  Owner != null; }
             public ToppingType Type { get; private set; }
             public int Version { get; private set; }
 
-            public UnmanagedTopping(GameObject piece, System.Object owner, ToppingType type, int version = -1)
+            public UnmanagedTopping(Topping topping, System.Object owner, ToppingType type, int version = -1)
             {
-                Prefab = piece;
+                Topping = topping;
                 Owner = owner;
                 Type = type; 
                 Version = version;
@@ -259,57 +259,131 @@ namespace WorldG.level
             _toppingsPool[piece.ToppingType].AddLast(copy);
         }
 
-        private Topping GetTopping(object owner, ToppingType toppingType, int version = -1)
+        public Topping GetTopping(object owner, ToppingType toppingType, int version = -1)
         {
+            UnmanagedTopping newTopping = default;
+            if (FindUnamagedTopping(toppingType, out newTopping, version))
+            {
+                newTopping.SetOwner(owner);
+
+                _unmanagedToppings[toppingType].Remove(newTopping);
+                newTopping.Topping.Prefab.SetActive(true);
+                _unmanagedToppings[toppingType].AddLast(newTopping);
+
+                return newTopping.Topping;
+            }
+
+            //if (piece.Topping.Prefab)
+            //    SetToppingAvailable(ref piece);
+
+            if (!_unmanagedToppings.ContainsKey(toppingType))
+                _unmanagedToppings.Add(toppingType, new());
+
+            var topping = pieceCollection.GetTopping(toppingType);
+            topping.SetPrefab(Instantiate(topping.Prefab, topping.Prefab.transform.position, topping.Prefab.transform.rotation, toppingsParent));
+
+            topping.Prefab.GetComponent<Collider>().enabled = false;
+            var (type, prefab, sides, versionID, haveSpline) = topping;
+            var copy = new Topping(type, prefab, sides, versionID, haveSpline);
+
+            topping.Prefab.SetActive(true);
+            var unmanaged = new UnmanagedTopping(topping, owner, type, version);
+            _unmanagedToppings[type].AddLast(unmanaged);
+            return topping;
+        }
+
+        private bool FindUnamagedTopping(ToppingType toppingType, out UnmanagedTopping topping, int version = -1)
+        {
+            topping = default;
+
             if (_unmanagedToppings.ContainsKey(toppingType))
             {
                 var cur = _unmanagedToppings[toppingType].First;
 
                 for (int i = 0; i < _unmanagedToppings[toppingType].Count; i++)
                 {
-                    if (!cur.Value.Prefab.activeSelf)
+                    if (!cur.Value.Topping.Prefab.activeSelf)
                     {
                         if (version >= 0 ? cur.Value.Version == version : true)
                         {
-                            cur.Value.SetOwner(owner);
-                            return cur.Value;
-
-                            _unmanagedToppings[toppingType].AddFirst(cur);
-
-                            var worker = piece.SetTopping(cur.Value);
-                            SetToppingAvailable(ref piece);
-                            var (pref, typep) = (piece.Topping.Prefab, piece.ToppingType);
-                            worker.OnStop += () => DisableTopping(pref, typep);
-
-                            if (piece.Topping.Prefab)
-                                SetToppingAvailable(ref piece);
-                            return;
+                            topping = cur.Value;
+                            return true;
                         }
+
+                        break;
                     }
 
                     cur = cur.Next;
                 }
             }
 
-            if (piece.Topping.Prefab)
-                SetToppingAvailable(ref piece);
+            return false;
+        }
 
-            if (!_toppingsPool.ContainsKey(toppingType))
-                _toppingsPool.Add(toppingType, new());
+        private bool FindTopping(ToppingType type, out UnmanagedTopping topping, int version = -1)
+        {
+            topping = default;
 
-            var topping = pieceCollection.GetTopping(toppingType);
-            topping.SetPrefab(Instantiate(topping.Prefab, topping.Prefab.transform.position, topping.Prefab.transform.rotation, toppingsParent));
+            //if (_toppingsPool.ContainsKey(type))
+            //{
+            //    var cur = _toppingsPool[type].First;
+            //    for (int i = 0; i < _toppingsPool[type].Count; i++)
+            //    {
+            //        if (!cur.Value.Prefab.activeSelf)
+            //        {
+            //            if (version >= 0 ? cur.Value.Version == version : true)
+            //            {
+            //                var worker = piece.SetTopping(cur.Value);
+            //                SetToppingAvailable(ref piece);
+            //                var (pref, typep) = (piece.Topping.Prefab, piece.ToppingType);
+            //                worker.OnStop += () => DisableTopping(pref, typep);
 
-            var (type, prefab, sides, versionID, haveSpline) = topping;
-            var copy = new Topping(type, prefab, sides, versionID, haveSpline);
+            //                if (piece.Topping.Prefab)
+            //                    SetToppingAvailable(ref piece);
+            //                return;
+            //            }
+            //        }
+            //        else break;
 
-            var worker1 = piece.SetTopping(topping);
-            var (pref1, typep1) = (piece.Topping.Prefab, piece.ToppingType);
+            //        cur = cur.Next;
+            //    }
+            //}
 
-            worker1.OnStop += () => DisableTopping(pref1, typep1);
-            piece.Topping.Prefab.SetActive(true);
+            return false;
+        }
 
-            _toppingsPool[piece.ToppingType].AddLast(copy);
+        public void DisableUnamanagedTopping(Topping topping)
+        {
+            if (_unmanagedToppings.ContainsKey(topping.Type))
+            {
+                var cur = _unmanagedToppings[topping.Type].Last;
+
+                for (int i = 0; i < _unmanagedToppings[topping.Type].Count; i++)
+                {
+                    if (cur.Value.Topping.Prefab.activeSelf)
+                    {
+                        if (topping.Prefab.GetInstanceID() == cur.Value.Topping.Prefab.GetInstanceID())
+                        {
+                            cur.Value.SetOwner(null);
+
+                            _unmanagedToppings[topping.Type].Remove(cur);
+                            cur.Value.Topping.Prefab.SetActive(false);
+                            _unmanagedToppings[topping.Type].AddFirst(cur);
+
+                            return;
+                        }
+                    }
+                    else
+                        break;
+
+                    cur = cur.Previous;
+                }
+            }
+        }
+
+        public void SetUnmanagetTopping()
+        {
+
         }
 
         private void SetToppingAvailable(ref Piece piece)
@@ -421,7 +495,7 @@ namespace WorldG.level
                         if (cur.Value.Owner == null)
                         {
                             var next = cur.Next;
-                            Destroy(cur.Value.Prefab);
+                            Destroy(cur.Value.Topping.Prefab);
                             _unmanagedToppings[key].Remove(cur);
                             
                             --i;

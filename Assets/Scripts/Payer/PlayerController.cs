@@ -23,13 +23,19 @@ namespace WorldG.Control
         (int id, int clicks, IClickable clickable) clickedItem = default;
         (int id, ISelectable selectable) selected;
         Vector3 zoomCurSpeed = Vector3.zero;
+        bool hasTemporalPiece = false;
+
+        PoolManager pool;
         #endregion
+
+        public Topping TemporalPiece { get; set; }
 
         private void Awake()
         {
             level = FindObjectOfType<LevelGenerator>();
             _minionsManager = FindObjectOfType<MinionsManager>();
             _syncContext = SynchronizationContext.Current;
+            pool = FindObjectOfType<PoolManager>();
         }
 
         private void Start()
@@ -39,6 +45,26 @@ namespace WorldG.Control
 
         private void Update()
         {
+            if (TemporalPiece.Prefab)
+            {
+                RaycastHit hit;
+
+                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 200))
+                {
+                    var piece = level.GetPieceInfo(hit.collider.transform.position);
+                    if (!piece.Topping.Prefab && piece.Type != SideType.Water)
+                        TemporalPiece.Prefab.transform.position = hit.transform.position + Vector3.up * 1;
+
+                    Debug.DrawRay(TemporalPiece.Prefab.transform.position, Vector3.up * 10);
+                }
+
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    pool.DisableUnamanagedTopping(TemporalPiece);
+                    TemporalPiece = default;
+                }
+            }
+
             if (Input.GetMouseButtonUp(0))
             {
                 RaycastHit hit;

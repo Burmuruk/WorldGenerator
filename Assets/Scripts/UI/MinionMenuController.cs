@@ -3,39 +3,50 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using WorldG.Control;
 using WorldG.level;
 
-public class MinionMenuController : MonoBehaviour
+namespace WorldG.UI
 {
-    [SerializeField] MinionMenu[] menus;
-
-    PoolManager pool;
-
-    [Serializable]
-    public struct MinionMenu
+    public class MinionMenuController : MonoBehaviour
     {
-        [SerializeField] public GameObject panel;
-        [SerializeField] public ToppingType type;
-        [SerializeField] public bool unlocked;
-        [SerializeField] public Button button;
-    }
+        [SerializeField] MinionMenu[] menus;
 
-    private void Awake()
-    {
-        pool = FindObjectOfType<PoolManager>();
-    }
+        PoolManager pool;
+        PlayerController player;
 
-    public void ShowMenu()
-    {
-        foreach (var menu in menus)
+        [Serializable]
+        public struct MinionMenu
         {
-            if (menu.unlocked)
-                menu.panel.SetActive(true);
+            [SerializeField] public GameObject panel;
+            [SerializeField] public ToppingType type;
+            [SerializeField] public bool unlocked;
+            [SerializeField] public Button button;
         }
-    }
 
-    private void ShowPiece()
-    {
-        pool.GetTopping();
-    }
+        private void Awake()
+        {
+            pool = FindObjectOfType<PoolManager>();
+            player = FindObjectOfType<PlayerController>();
+        }
+
+        public void ShowMenu()
+        {
+            foreach (var menu in menus)
+            {
+                if (menu.unlocked)
+                {
+                    menu.panel.SetActive(true);
+                    menu.button.onClick.AddListener(() => ShowPiece(menu.type));
+                }
+            }
+        }
+
+        private void ShowPiece(ToppingType type)
+        {
+            var topping = pool.GetTopping(this, type);
+
+            player.TemporalPiece = topping;
+        }
+    } 
 }

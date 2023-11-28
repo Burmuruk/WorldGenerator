@@ -47,11 +47,18 @@ namespace WorldG.Control
                 Debug.DrawRay(transform.position, Vector3.up * 8, Color.red);
         }
 
+        private void OnDrawGizmos()
+        {
+            if (_isSelected)
+                Debug.DrawRay(transform.position, Vector3.up * 10);
+        }
+
         public void Select()
         {
             if (IsSelected) return;
 
             _isSelected = true;
+            Debug.DrawRay(transform.position, Vector3.up * 10, Color.red, 100);
         }
 
         public void Deselect()

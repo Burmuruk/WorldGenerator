@@ -7,6 +7,34 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 3953015924819782554}
     m_Modifications:
+    - target: {fileID: 1695417253240403351, guid: 24e47e6a397860e458b244778424861d, type: 3}
+      propertyPath: nodeData.radious
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1695417253240403351, guid: 24e47e6a397860e458b244778424861d, type: 3}
+      propertyPath: nodeData.shouldDraw
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1695417253240403351, guid: 24e47e6a397860e458b244778424861d, type: 3}
+      propertyPath: nodeData.nodeColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1695417253240403351, guid: 24e47e6a397860e458b244778424861d, type: 3}
+      propertyPath: nodeData.nodeColor.b
+      value: 0.7735849
+      objectReference: {fileID: 0}
+    - target: {fileID: 1695417253240403351, guid: 24e47e6a397860e458b244778424861d, type: 3}
+      propertyPath: nodeData.nodeColor.g
+      value: 0.16850807
+      objectReference: {fileID: 0}
+    - target: {fileID: 1695417253240403351, guid: 24e47e6a397860e458b244778424861d, type: 3}
+      propertyPath: nodeData.nodeColor.r
+      value: 0.07589887
+      objectReference: {fileID: 0}
+    - target: {fileID: 1695417253240403351, guid: 24e47e6a397860e458b244778424861d, type: 3}
+      propertyPath: nodeData.verticalOffset
+      value: 0.2
+      objectReference: {fileID: 0}
     - target: {fileID: 5357255792396894381, guid: 24e47e6a397860e458b244778424861d, type: 3}
       propertyPath: nodeData.radious
       value: 0.1
@@ -83,7 +111,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: MyPoint
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5357255792396894381, guid: 24e47e6a397860e458b244778424861d, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 24e47e6a397860e458b244778424861d, type: 3}
 --- !u!1001 &8684885401992500411
 PrefabInstance:
@@ -98,7 +127,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
       propertyPath: nodesCount
-      value: 6
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5646676414416912160, guid: ae2a915886ab4b144a263d961be8b6f2, type: 3}
       propertyPath: nodeData.radious

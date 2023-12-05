@@ -44,16 +44,13 @@ namespace WorldG.UI
             {
                 if (panel.type == type)
                 {
-                    float value = 0;
-                    if (float.TryParse(panel.text.text, out value))
-                    {
-                        if (panel.dtShowAmount.IsRunning) 
-                            panel.dtShowAmount.Restart();
-                        else
-                            StartCoroutine(panel.dtShowAmount.EnableInTime());
+                    if (panel.dtShowAmount.IsRunning) 
+                        panel.dtShowAmount.Restart();
+                    else
+                        StartCoroutine(panel.dtShowAmount.EnableInTime());
 
+                    if (panel.text)
                         panel.text.text = amount.ToString();
-                    }
                 }
             }
         }

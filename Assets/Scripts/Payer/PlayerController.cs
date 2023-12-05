@@ -23,7 +23,8 @@ namespace WorldG.Control
         (int id, int clicks, IClickable clickable) clickedItem = default;
         (int id, ISelectable selectable) selected;
         Vector3 zoomCurSpeed = Vector3.zero;
-        bool hasTemporalPiece = false;
+
+        public float cameraSpeed = 3;
 
         PoolManager pool;
         #endregion
@@ -65,24 +66,35 @@ namespace WorldG.Control
                 }
             }
 
+            if (Input.mousePosition.x >= Screen.width - 20)
+                Camera.main.transform.Translate(Vector3.right * Time.deltaTime * cameraSpeed);
+            if (Input.mousePosition.x <= 20)
+                Camera.main.transform.Translate(Vector3.left * Time.deltaTime * cameraSpeed);
+            if (Input.mousePosition.y >= Screen.height - 20)
+                Camera.main.transform.Translate(Vector3.up * Time.deltaTime * cameraSpeed);
+            if (Input.mousePosition.y <= 20)
+                Camera.main.transform.Translate(Vector3.down * Time.deltaTime * cameraSpeed);
+
             if (Input.GetMouseButtonUp(0))
             {
                 RaycastHit hit;
 
                 if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 200))
                 {
-                    if (hit.collider.gameObject.GetComponent<IClickable>() is var c && c != null)
+                    if (hit.collider.gameObject.GetComponent<Citizen>() is var m && m != null)
+                    {
+                        _minionsManager.SelectMinion(m);
+                        m.Click();
+                    }
+                    else if (hit.collider.gameObject.GetComponent<IClickable>() is var c && c != null)
                     {
                         if (c.IsWorking) return;
 
                         InteractWithStructure(c, hit.colliderInstanceID);
                     }
-                    else if (hit.collider.gameObject.GetComponent<Citizen>() is var m && m != null)
-                    {
-                        _minionsManager.SelectMinion(m);
-                    }
                     else
                     {
+                        
                         _minionsManager.DeSelect();
                         var cord = level.RemoveOffset(hit.collider.transform.position);
                         //PieceData.ChangeColor(pieces[cord.x, cord.y], SideType.Mudd);

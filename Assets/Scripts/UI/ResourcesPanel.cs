@@ -44,12 +44,13 @@ namespace WorldG.UI
             {
                 if (panel.type == type)
                 {
-                    if (panel.dtShowAmount.IsRunning)
+                    if (panel.dtShowAmount.IsRunning) 
                         panel.dtShowAmount.Restart();
                     else
                         StartCoroutine(panel.dtShowAmount.EnableInTime());
 
-                    panel.text.text = amount.ToString();
+                    if (panel.text)
+                        panel.text.text = amount.ToString();
                 }
             }
         }

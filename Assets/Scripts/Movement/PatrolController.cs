@@ -181,6 +181,7 @@ namespace WorldG.Patrol
             spline.Initialize();
 
             tasksList = new();
+            enumerator = null;
             if (actionsList == null && !InitializeTasks())
                 return;
 

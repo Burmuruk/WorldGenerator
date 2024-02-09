@@ -83,7 +83,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: MyPoint (4)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5357255792396894381, guid: 24e47e6a397860e458b244778424861d, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 24e47e6a397860e458b244778424861d, type: 3}
 --- !u!1001 &469333555
 PrefabInstance:
@@ -168,7 +169,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: MyPoint (2)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5357255792396894381, guid: 24e47e6a397860e458b244778424861d, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 24e47e6a397860e458b244778424861d, type: 3}
 --- !u!1001 &898162406
 PrefabInstance:
@@ -253,7 +255,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: MyPoint (3)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5357255792396894381, guid: 24e47e6a397860e458b244778424861d, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 24e47e6a397860e458b244778424861d, type: 3}
 --- !u!1001 &1947665412
 PrefabInstance:
@@ -309,6 +312,10 @@ PrefabInstance:
     - target: {fileID: 3953015924819782554, guid: f2326e8e45b728f41a258018f315d33f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3953015924819782555, guid: f2326e8e45b728f41a258018f315d33f, type: 3}
+      propertyPath: nodesCount
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4811721918395573101, guid: f2326e8e45b728f41a258018f315d33f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -415,7 +422,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: MyPoint (1)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5357255792396894381, guid: 24e47e6a397860e458b244778424861d, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 24e47e6a397860e458b244778424861d, type: 3}
 --- !u!1001 &2042781387
 PrefabInstance:
@@ -500,7 +508,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: MyPoint (5)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5357255792396894381, guid: 24e47e6a397860e458b244778424861d, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 24e47e6a397860e458b244778424861d, type: 3}
 --- !u!1001 &6325535089354570060
 PrefabInstance:

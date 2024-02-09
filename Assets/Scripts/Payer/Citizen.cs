@@ -12,7 +12,8 @@ namespace WorldG.Control
         [SerializeField] private int damage = 0;
         [SerializeField] private int farmAmount = 30;
         [SerializeField] private float farmingRate = 2;
-        Inventory inventory;
+        InventoryManager inventory;
+        MinionMenuController menu;
 
         private bool isFarming = false;
 
@@ -20,7 +21,18 @@ namespace WorldG.Control
         {
             base.Awake();
 
-            inventory = FindObjectOfType<Inventory>();
+            inventory = FindObjectOfType<InventoryManager>();
+        }
+
+        public override void Deselect()
+        {
+            base.Deselect();
+
+            if (menu)
+            {
+                menu.HideMenu();
+                menu = null;
+            }
         }
 
         public override void SetWork(object args)
@@ -115,7 +127,7 @@ namespace WorldG.Control
 
         public void Click()
         {
-            var menu = FindObjectOfType<MinionMenuController>();
+            menu = FindObjectOfType<MinionMenuController>();
             menu.ShowMenu();
         }
 

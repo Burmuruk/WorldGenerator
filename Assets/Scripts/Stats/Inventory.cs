@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace WorldG.Stats
@@ -36,6 +33,25 @@ namespace WorldG.Stats
         {
             _resources[type] += amount;
             OnResourceChanged?.Invoke(type, _resources[type]);
+        }
+
+        public int SpendResource(ResourceType type, int amount)
+        {
+            int result = 0;
+            var rest = _resources[type] - amount;
+
+            if (rest > 0)
+            {
+                _resources[type] -= amount;
+                OnResourceChanged?.Invoke(type, _resources[type]);
+            }
+
+            return result;
+        }
+
+        public int GetResource(ResourceType type, int amount)
+        {
+            return _resources[type];
         }
     }
 }

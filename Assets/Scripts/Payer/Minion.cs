@@ -53,7 +53,7 @@ namespace WorldG.Control
                 Debug.DrawRay(transform.position, Vector3.up * 10);
         }
 
-        public void Select()
+        public virtual void Select()
         {
             if (IsSelected) return;
 
@@ -61,7 +61,7 @@ namespace WorldG.Control
             Debug.DrawRay(transform.position, Vector3.up * 10, Color.red, 100);
         }
 
-        public void Deselect()
+        public virtual void Deselect()
         {
             _isSelected = false;
         }

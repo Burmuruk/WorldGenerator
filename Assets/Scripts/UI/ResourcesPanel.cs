@@ -38,24 +38,36 @@ namespace WorldG.UI
                 panels[i].dtShowAmount = new(2, panels[i].panel);
         }
 
-        private void UpdateResource(ResourceType type, int amount)
+        public void UpdateResource(ResourceType type, int amount)
         {
             foreach (var panel in panels)
             {
                 if (panel.type == type)
                 {
-                    float value = 0;
-                    if (float.TryParse(panel.text.text, out value))
-                    {
-                        if (panel.dtShowAmount.IsRunning) 
-                            panel.dtShowAmount.Restart();
-                        else
-                            StartCoroutine(panel.dtShowAmount.EnableInTime());
+                    if (panel.dtShowAmount.IsRunning)
+                        panel.dtShowAmount.Restart();
+                    else
+                        StartCoroutine(panel.dtShowAmount.EnableInTime());
 
-                        panel.text.text = amount.ToString();
-                    }
+                    panel.text.text = amount.ToString();
                 }
             }
         }
+
+        //public void ShowRequirement(ResourceType type)
+        //{
+        //    foreach (var panel in panels)
+        //    {
+        //        if (panel.type == type)
+        //        {
+        //            if (panel.dtShowAmount.IsRunning)
+        //                panel.dtShowAmount.Restart();
+        //            else
+        //                StartCoroutine(panel.dtShowAmount.EnableInTime());
+
+        //            panel.text.text = amount.ToString();
+        //        }
+        //    }
+        //}
     }
 }

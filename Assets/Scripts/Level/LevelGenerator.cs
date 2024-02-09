@@ -218,7 +218,7 @@ namespace WorldG.level
             PieceData.ChangeType(piece, piece.Type);
         }
 
-        private void SetTopping(ref Piece piece, ToppingType type, uint rotation = 0)
+        public void SetTopping(ref Piece piece, ToppingType type, uint rotation = 0)
         {
             SetTopping(ref piece, PieceData.GetTopping(type), rotation);
         }

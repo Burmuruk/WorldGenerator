@@ -45,25 +45,7 @@ namespace WorldG.Control
 
         private void Update()
         {
-            if (TemporalPiece.Prefab)
-            {
-                RaycastHit hit;
-
-                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 200))
-                {
-                    var piece = level.GetPieceInfo(hit.collider.transform.position);
-                    if (!piece.Topping.Prefab && piece.Type != SideType.Water)
-                        TemporalPiece.Prefab.transform.position = hit.transform.position + Vector3.up * 1;
-
-                    Debug.DrawRay(TemporalPiece.Prefab.transform.position, Vector3.up * 10);
-                }
-
-                if (Input.GetKeyDown(KeyCode.Escape))
-                {
-                    pool.DisableUnamanagedTopping(TemporalPiece);
-                    TemporalPiece = default;
-                }
-            }
+            Chech_TemporalPieceInputs();
 
             if (Input.GetMouseButtonUp(0))
             {
@@ -71,15 +53,15 @@ namespace WorldG.Control
 
                 if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 200))
                 {
-                    if (hit.collider.gameObject.GetComponent<IClickable>() is var c && c != null)
+                    if (hit.collider.gameObject.GetComponent<Citizen>() is var m && m != null)
+                    {
+                        _minionsManager.SelectMinion(m);
+                    }
+                    else if (hit.collider.gameObject.GetComponent<IClickable>() is var c && c != null)
                     {
                         if (c.IsWorking) return;
 
                         InteractWithStructure(c, hit.colliderInstanceID);
-                    }
-                    else if (hit.collider.gameObject.GetComponent<Citizen>() is var m && m != null)
-                    {
-                        _minionsManager.SelectMinion(m);
                     }
                     else
                     {
@@ -106,14 +88,14 @@ namespace WorldG.Control
                             s.Deselect();
                             selected = (-1, null);
                         }
-                        else 
+                        else
                         {
                             selected.selectable?.Deselect();
                             selected = (hit.colliderInstanceID, s);
                             s.Select();
 
                             _minionsManager.SetTarget(s, hit.collider.transform.position);
-                        
+
                             //selectable = s;
                             //selectable.OnDeselection += () => selectable = null;
                         }
@@ -130,6 +112,37 @@ namespace WorldG.Control
             if (wheel != 0)
             {
                 Camera.main.transform.Translate(new Vector3(0, wheel * zoomSpeed * Time.deltaTime * -1, 0), Space.World);
+            }
+        }
+
+        private void Chech_TemporalPieceInputs()
+        {
+            if (TemporalPiece.Prefab)
+            {
+                RaycastHit hit;
+
+                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 200))
+                {
+                    var piece = level.GetPieceInfo(hit.collider.transform.position);
+                    if (!piece.Topping.Prefab && piece.Type != SideType.Water)
+                        TemporalPiece.Prefab.transform.position = hit.transform.position + Vector3.up * 1;
+
+                    Debug.DrawRay(TemporalPiece.Prefab.transform.position, Vector3.up * 10);
+
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        pool.DisableUnamanagedTopping(TemporalPiece);
+
+                        level.SetTopping(ref piece, TemporalPiece.Type, 2);
+                        TemporalPiece = default;
+                    }
+                }
+
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    pool.DisableUnamanagedTopping(TemporalPiece);
+                    TemporalPiece = default;
+                }
             }
         }
 

@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using WorldG.Control;
 using WorldG.level;
+using WorldG.Stats;
 
 namespace WorldG.UI
 {
@@ -14,6 +15,7 @@ namespace WorldG.UI
 
         PoolManager pool;
         PlayerController player;
+        InventoryManager inventory;
 
         [Serializable]
         public struct MinionMenu
@@ -28,6 +30,7 @@ namespace WorldG.UI
         {
             pool = FindObjectOfType<PoolManager>();
             player = FindObjectOfType<PlayerController>();
+            inventory = FindObjectOfType<InventoryManager>();
         }
 
         public void ShowMenu()
@@ -37,7 +40,19 @@ namespace WorldG.UI
                 if (menu.unlocked)
                 {
                     menu.panel.SetActive(true);
+                    menu.button.onClick.RemoveAllListeners();
                     menu.button.onClick.AddListener(() => ShowPiece(menu.type));
+                }
+            }
+        }
+
+        public void HideMenu()
+        {
+            foreach (var menu in menus)
+            {
+                if (menu.panel.activeSelf)
+                {
+                    menu.panel.SetActive(false);
                 }
             }
         }

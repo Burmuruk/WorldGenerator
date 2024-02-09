@@ -47,6 +47,12 @@ namespace WorldG.level
             DeSelect();
             selected.Add(minion);
             minion.Select();
+
+            var citizen = minion as Citizen;
+            if (citizen != null)
+            {
+                citizen.Click();
+            }
         }
 
         public void DeSelect()
